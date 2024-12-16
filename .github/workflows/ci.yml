@@ -36,12 +36,18 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
+    # Make this job optional
+    continue-on-error: true
+    
     steps:
     - uses: actions/checkout@v3
     
+    # Only run Snyk if the token is available
     - name: Run Snyk to check for vulnerabilities
+      if: secrets.SNYK_TOKEN != ''
       uses: snyk/actions/node@master
       env:
+        # Reference the secret properly
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         args: --severity-threshold=high

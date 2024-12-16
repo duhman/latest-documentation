@@ -148,7 +148,21 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - Input validation and sanitization
 - Security headers configured
 - Regular dependency updates
+- Automated security scanning with Snyk (optional)
 - Please report security vulnerabilities to [security@yourdomain.com]
+
+### Security Scanning
+
+This project uses Snyk for automated security scanning. To enable it:
+
+1. Sign up for a [Snyk account](https://snyk.io)
+2. Get your Snyk API token
+3. Add the token to your GitHub repository:
+   - Go to Settings > Secrets and variables > Actions
+   - Add a new secret named `SNYK_TOKEN`
+   - Paste your Snyk API token as the value
+
+The security scanning will run automatically on every push and pull request.
 
 ## 📄 License
 

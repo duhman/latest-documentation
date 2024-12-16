@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "yarn install",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_API_URL": "WILL_BE_SET_BY_VERCEL"
+  }
+}

@@ -1,104 +1,162 @@
 # Latest Documentation Generator
 
-A Next.js application that generates up-to-date API documentation for software products in markdown format, specifically designed for LLMs and agentic IDEs.
+[![CI](https://github.com/[username]/latest-documentation/actions/workflows/ci.yml/badge.svg)](https://github.com/[username]/latest-documentation/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.0.0-black.svg)](https://nextjs.org/)
 
-## Features
+A modern, efficient Next.js application that generates up-to-date API documentation for software products in markdown format. Specifically designed for Large Language Models (LLMs) and agentic IDEs, this tool ensures your documentation stays current and accessible.
 
-- Generate latest API documentation from official sources
-- Support for multiple software products
-- Markdown output format
-- Modern UI with Shadcn UI components
-- Built with Next.js App Router
-- Vercel AI integration for enhanced documentation processing
+## 🌟 Features
 
-## Getting Started
+- **Automated Documentation Generation**: Automatically generates latest API documentation from official sources
+- **Multi-Product Support**: Handles documentation for multiple software products simultaneously
+- **Markdown Output**: Generates clean, structured markdown files optimized for LLMs
+- **Modern UI/UX**: Built with Shadcn UI components for a beautiful, responsive interface
+- **Advanced Architecture**:
+  - Next.js 14 App Router for optimal performance
+  - Vercel AI integration for enhanced documentation processing
+  - Rate limiting and security features built-in
+  - Error handling and retry mechanisms
+- **Developer Experience**:
+  - TypeScript for type safety
+  - ESLint and Prettier for code quality
+  - GitHub Actions for CI/CD
+  - Comprehensive documentation
 
-1. Install dependencies:
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18.x or later
+- Yarn or npm
+- Git
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm install
-# or
+git clone https://github.com/[username]/latest-documentation.git
+cd latest-documentation
+```
+
+2. Install dependencies:
+```bash
 yarn install
 ```
 
-2. Run the development server:
+3. Create a `.env.local` file based on `.env.example`:
 ```bash
-npm run dev
-# or
+cp .env.example .env.local
+```
+
+4. Run the development server:
+```bash
 yarn dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Deployment on Vercel
+## 💻 Usage
 
-This application is optimized for deployment on Vercel. To deploy:
+1. **Start Documentation Generation**:
+   - Enter the product name (e.g., HubSpot, Stripe)
+   - Specify documentation requirements and preferences
+   - Click "Generate Documentation"
 
-1. Push your code to a GitHub repository
+2. **View Results**:
+   - Generated markdown files are saved in `public/docs`
+   - Each product gets its own documentation structure
+   - Files are optimized for LLM consumption
 
-2. Visit [Vercel](https://vercel.com) and click "New Project"
+3. **API Integration**:
+   - Use the REST API endpoint at `/api/generate-docs`
+   - Rate limiting applies to prevent abuse
+   - Proper error handling included
 
-3. Import your repository
+## 🏗️ Architecture
 
-4. Configure the following environment variables if needed:
-   - `NEXT_PUBLIC_API_URL`: Your API URL (optional, defaults to same domain)
+### Tech Stack
 
-5. Click "Deploy"
+- **Frontend**:
+  - Next.js 14
+  - React 18
+  - Tailwind CSS
+  - Shadcn UI
+  - TypeScript
 
-The application will be automatically built and deployed to Vercel's global edge network.
+- **Backend**:
+  - Next.js API Routes
+  - Vercel AI SDK
+  - Rate Limiting
+  - Error Handling
 
-### Deployment Configuration
+- **Development**:
+  - TypeScript
+  - ESLint
+  - Prettier
+  - GitHub Actions
 
-The application includes several configuration files for optimal deployment:
-
-- `vercel.json`: Configures deployment settings
-- `next.config.js`: Configures Next.js settings
-- `.gitignore`: Excludes unnecessary files
-- `package.json`: Defines build and start scripts
-
-## Usage
-
-1. Enter the product name (e.g., HubSpot)
-2. Specify your documentation requirements
-3. Click "Generate Documentation"
-4. The application will search, crawl, and generate markdown files with the latest documentation
-
-## Tech Stack
-
-- Next.js 14
-- React 18
-- Tailwind CSS
-- Shadcn UI
-- Vercel AI
-- TypeScript
-- Axios for HTTP requests
-- Cheerio for web scraping
-
-## Project Structure
+### Project Structure
 
 ```
 latest-documentation/
 ├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── generate-docs/
-│   │   │       └── route.ts
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/
-│   │   ├── DocumentationForm.tsx
-│   │   └── LoadingSpinner.tsx
-│   └── utils/
-│       ├── documentationProcessor.ts
-│       └── markdownGenerator.ts
-├── public/
-│   └── docs/
-├── next.config.js
-├── package.json
-├── tailwind.config.js
-├── tsconfig.json
-└── vercel.json
+│   ├── app/                 # Next.js App Router
+│   │   ├── api/            # API endpoints
+│   │   ├── layout.tsx      # Root layout
+│   │   └── page.tsx        # Home page
+│   ├── components/         # React components
+│   └── utils/             # Utility functions
+├── public/                # Static files
+│   └── docs/             # Generated documentation
+├── .github/              # GitHub configuration
+├── next.config.js        # Next.js configuration
+└── package.json          # Dependencies
 ```
 
-## License
+## 🚀 Deployment
 
-MIT
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Visit [Vercel](https://vercel.com)
+3. Import your repository
+4. Configure environment variables:
+   - `NEXT_PUBLIC_API_URL`
+   - `RATE_LIMIT_MAX_REQUESTS`
+   - `REQUEST_TIMEOUT_MS`
+5. Click "Deploy"
+
+### Configuration Files
+
+- `vercel.json`: Deployment settings
+- `next.config.js`: Next.js configuration
+- `.env.example`: Environment variables template
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+- Code of Conduct
+- Development process
+- How to submit pull requests
+- Coding standards
+
+## 🔒 Security
+
+- Rate limiting on all API endpoints
+- Input validation and sanitization
+- Security headers configured
+- Regular dependency updates
+- Please report security vulnerabilities to [security@yourdomain.com]
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) team for the amazing framework
+- [Vercel](https://vercel.com) for hosting and deployment
+- [Shadcn UI](https://ui.shadcn.com/) for beautiful components
+- All our contributors and users

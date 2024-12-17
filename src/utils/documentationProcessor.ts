@@ -37,19 +37,28 @@ export class DocumentationProcessor {
   }
 
   private async searchDocumentation(): Promise<string[]> {
-    // For now, we'll use a simple mapping of products to their documentation URLs
+    // Updated documentation URLs mapping
     const documentationUrls: Record<string, string[]> = {
       'hubspot': [
-        'https://developers.hubspot.com/docs/api/overview',
-        'https://developers.hubspot.com/docs/api/getting-started',
+        'https://developers.hubspot.com/docs/api/conversations/conversations',
+        'https://developers.hubspot.com/docs/api/crm/tickets',
+        'https://developers.hubspot.com/docs/api/crm/associations/v4',
       ],
-      // Add more products and their documentation URLs here
+      'stripe': [
+        'https://stripe.com/docs/api',
+        'https://stripe.com/docs/development/quickstart',
+      ],
+      'github': [
+        'https://docs.github.com/en/rest',
+        'https://docs.github.com/en/rest/overview/resources-in-the-rest-api',
+      ],
+      // Add more products here
     };
 
     const urls = documentationUrls[this.product.toLowerCase()] || [];
     if (urls.length === 0) {
       throw new DocumentationError(
-        `No documentation sources found for ${this.product}`,
+        `No documentation sources found for ${this.product}. Supported products: ${Object.keys(documentationUrls).join(', ')}`,
         'INVALID_SOURCE'
       );
     }
@@ -59,22 +68,65 @@ export class DocumentationProcessor {
 
   private async fetchWithRetry(url: string, retries = this.maxRetries): Promise<string> {
     try {
+      // Add a small delay between retries to avoid rate limiting
+      if (this.maxRetries - retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay * (this.maxRetries - retries)));
+      }
+
+      // Special handling for HubSpot API docs
+      const isHubSpotApi = url.includes('api.hubspot.com');
+      const headers: Record<string, string> = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': isHubSpotApi ? 'application/json' : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      };
+
+      // Add browser-like headers for non-API requests
+      if (!isHubSpotApi) {
+        Object.assign(headers, {
+          'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'Sec-Ch-Ua-Mobile': '?0',
+          'Sec-Ch-Ua-Platform': '"macOS"',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Upgrade-Insecure-Requests': '1',
+        });
+      }
+
       const response = await axios.get(url, {
-        timeout: 10000, // 10 seconds timeout
-        headers: {
-          'User-Agent': 'Documentation-Generator/1.0',
-        },
+        timeout: 15000,
+        headers,
+        maxRedirects: 5,
+        validateStatus: (status) => status < 400,
       });
+
+      // For HubSpot API docs, format the JSON response as markdown
+      if (isHubSpotApi && typeof response.data === 'object') {
+        return this.formatHubSpotApiDocs(response.data, url);
+      }
+
+      // Wait a bit for any client-side rendering for non-API docs
+      if (!isHubSpotApi) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
       return response.data;
     } catch (error) {
       if (retries > 0 && error instanceof AxiosError && error.response?.status !== 404) {
-        await new Promise(resolve => setTimeout(resolve, this.retryDelay));
         return this.fetchWithRetry(url, retries - 1);
       }
       
       if (error instanceof AxiosError) {
-        if (error.response?.status === 404) {
+        const status = error.response?.status;
+        if (status === 404) {
           throw new DocumentationError(`Documentation page not found: ${url}`, 'FETCH_ERROR', url);
+        } else if (status === 403) {
+          throw new DocumentationError(`Access denied to documentation: ${url}. The page might require authentication.`, 'FETCH_ERROR', url);
         }
         throw new DocumentationError(
           `Failed to fetch documentation: ${error.message}`,
@@ -86,56 +138,243 @@ export class DocumentationProcessor {
     }
   }
 
+  private formatHubSpotApiDocs(data: any, url: string): string {
+    let content = '';
+
+    // Add API description if available
+    if (data.description) {
+      content += `${data.description}\n\n`;
+    }
+
+    // Add endpoints
+    if (data.paths) {
+      Object.entries(data.paths).forEach(([path, methods]: [string, any]) => {
+        Object.entries(methods).forEach(([method, details]: [string, any]) => {
+          content += `### ${method.toUpperCase()} ${path}\n\n`;
+          
+          if (details.summary) {
+            content += `${details.summary}\n\n`;
+          }
+          
+          if (details.description) {
+            content += `${details.description}\n\n`;
+          }
+
+          // Parameters
+          if (details.parameters?.length > 0) {
+            content += `#### Parameters\n\n`;
+            content += '| Name | Type | Required | Description |\n';
+            content += '|------|------|----------|-------------|\n';
+            details.parameters.forEach((param: any) => {
+              content += `| ${param.name} | ${param.type || param.schema?.type || '-'} | ${param.required ? 'Yes' : 'No'} | ${param.description || '-'} |\n`;
+            });
+            content += '\n';
+          }
+
+          // Request body
+          if (details.requestBody?.content) {
+            content += `#### Request Body\n\n`;
+            const schema = details.requestBody.content['application/json']?.schema;
+            if (schema) {
+              if (schema.properties) {
+                content += '| Property | Type | Required | Description |\n';
+                content += '|----------|------|----------|-------------|\n';
+                Object.entries(schema.properties).forEach(([name, prop]: [string, any]) => {
+                  const required = schema.required?.includes(name) ? 'Yes' : 'No';
+                  content += `| ${name} | ${prop.type || '-'} | ${required} | ${prop.description || '-'} |\n`;
+                });
+                content += '\n';
+              }
+            }
+          }
+
+          // Response
+          if (details.responses) {
+            content += `#### Responses\n\n`;
+            Object.entries(details.responses).forEach(([code, response]: [string, any]) => {
+              content += `**${code}**: ${response.description || '-'}\n\n`;
+              if (response.content?.['application/json']?.schema) {
+                content += `Response schema:\n\`\`\`json\n${JSON.stringify(response.content['application/json'].schema, null, 2)}\n\`\`\`\n\n`;
+              }
+            });
+          }
+        });
+      });
+    }
+
+    if (!content) {
+      throw new DocumentationError(
+        'No content could be extracted from the API documentation',
+        'NO_CONTENT',
+        url
+      );
+    }
+
+    return content;
+  }
+
   private async crawlPage(url: string): Promise<DocumentationSource> {
     try {
       const html = await this.fetchWithRetry(url);
       const $ = cheerio.load(html);
 
       // Remove unnecessary elements
-      $('script').remove();
-      $('style').remove();
-      $('nav').remove();
-      $('footer').remove();
-      $('header').remove();
+      $('script, style, nav, footer, header, iframe, .cookie-banner, .advertisement').remove();
 
       // Extract main content
-      const title = $('h1').first().text() || $('title').text();
+      const title = $('h1').first().text() || 
+                   $('title').text() || 
+                   $('meta[property="og:title"]').attr('content') ||
+                   'Untitled Documentation';
+
       let content = '';
 
-      // Process code blocks
-      $('pre code').each((_, elem) => {
-        const language = $(elem).attr('class')?.replace('language-', '') || '';
-        const code = $(elem).text();
-        content += formatCodeBlock(code, language) + '\n\n';
-      });
+      // Try multiple content selectors
+      const mainSelectors = [
+        'main',
+        'article',
+        '.content',
+        '.documentation',
+        '.docs-content',
+        '#main-content',
+        '.main-content',
+        '.markdown-body',
+        '.api-content',
+        '.api-documentation',
+        '.reference-content',
+        '[role="main"]',
+        '[data-testid="api-content"]',
+        '#api-reference',
+        '.content-wrap', // HubSpot specific
+        '.content-body', // HubSpot specific
+        '.api-endpoint-documentation', // HubSpot specific
+      ];
 
-      // Process notes and warnings
-      $('.note, .notification, .alert-info').each((_, elem) => {
-        content += formatNote($(elem).text()) + '\n';
-      });
+      let mainContent = $();
+      for (const selector of mainSelectors) {
+        const found = $(selector);
+        if (found.length > 0) {
+          mainContent = found;
+          break;
+        }
+      }
 
-      $('.warning, .alert-warning').each((_, elem) => {
-        content += formatWarning($(elem).text()) + '\n';
-      });
+      // If no main content found, try the body
+      if (mainContent.length === 0) {
+        mainContent = $('body');
+      }
 
-      // Process regular content
-      $('main, article, .content').find('h2, h3, h4, p, ul, ol').each((_, elem) => {
-        const text = $(elem).text().trim();
-        if (text) {
-          if (elem.name.startsWith('h')) {
-            content += `\n### ${text}\n\n`;
-          } else if (elem.name === 'ul' || elem.name === 'ol') {
-            $(elem).find('li').each((_, li) => {
-              content += `- ${$(li).text().trim()}\n`;
+      // Remove navigation, search, and other non-content elements
+      mainContent.find('.navigation, .nav, .search, .sidebar, .footer, .header, .cookie-banner, .announcement, .toolbar, .api-tokens').remove();
+
+      // Special handling for HubSpot API docs
+      if (url.includes('developers.hubspot.com')) {
+        // Extract API endpoint information
+        mainContent.find('.endpoint-wrapper, .api-endpoint').each((_, elem) => {
+          const $endpoint = $(elem);
+          
+          // Get HTTP method and path
+          const method = $endpoint.find('.http-method, .method').text().trim();
+          const path = $endpoint.find('.path, .endpoint-path').text().trim();
+          
+          if (method && path) {
+            content += `### ${method} ${path}\n\n`;
+          }
+
+          // Get description
+          const description = $endpoint.find('.description, .endpoint-description').text().trim();
+          if (description) {
+            content += `${description}\n\n`;
+          }
+
+          // Get parameters
+          const $params = $endpoint.find('.parameters, .params-wrapper');
+          if ($params.length > 0) {
+            content += '#### Parameters\n\n';
+            content += '| Name | Type | Required | Description |\n';
+            content += '|------|------|----------|-------------|\n';
+            
+            $params.find('.parameter, .param-row').each((_, param) => {
+              const $param = $(param);
+              const name = $param.find('.param-name').text().trim();
+              const type = $param.find('.param-type').text().trim();
+              const required = $param.find('.required').length > 0 ? 'Yes' : 'No';
+              const desc = $param.find('.param-description').text().trim();
+              
+              if (name) {
+                content += `| ${name} | ${type || '-'} | ${required} | ${desc || '-'} |\n`;
+              }
             });
             content += '\n';
-          } else {
-            content += `${text}\n\n`;
           }
-        }
-      });
 
-      if (!content.trim()) {
+          // Get request/response examples
+          $endpoint.find('.example-wrapper, .code-example').each((_, example) => {
+            const $example = $(example);
+            const title = $example.find('.example-title, h4').text().trim();
+            const code = $example.find('pre, code').text().trim();
+            
+            if (code) {
+              content += `#### ${title || 'Example'}\n\n`;
+              content += '```json\n' + code + '\n```\n\n';
+            }
+          });
+
+          content += '---\n\n';
+        });
+      }
+
+      // If no endpoints found, fall back to regular content processing
+      if (!content) {
+        // Process regular headings and text
+        mainContent.find('h1, h2, h3, h4, h5, h6, p, ul, ol, table').each((_, elem) => {
+          const $elem = $(elem);
+          const text = $elem.text().trim();
+          
+          if (text) {
+            if (elem.tagName.match(/^h[1-6]$/)) {
+              const level = elem.tagName[1];
+              content += `${'#'.repeat(parseInt(level))} ${text}\n\n`;
+            } else if (elem.tagName === 'ul' || elem.tagName === 'ol') {
+              $elem.find('li').each((_, li) => {
+                content += `- ${$(li).text().trim()}\n`;
+              });
+              content += '\n';
+            } else if (elem.tagName === 'table') {
+              // Convert table to markdown
+              const rows: string[][] = [];
+              $elem.find('tr').each((_, tr) => {
+                const row: string[] = [];
+                $(tr).find('th, td').each((_, cell) => {
+                  row.push($(cell).text().trim());
+                });
+                if (row.length > 0) {
+                  rows.push(row);
+                }
+              });
+              
+              if (rows.length > 0) {
+                content += '| ' + rows[0].join(' | ') + ' |\n';
+                content += '| ' + rows[0].map(() => '---').join(' | ') + ' |\n';
+                rows.slice(1).forEach(row => {
+                  content += '| ' + row.join(' | ') + ' |\n';
+                });
+                content += '\n';
+              }
+            } else {
+              content += `${text}\n\n`;
+            }
+          }
+        });
+      }
+
+      // Clean up content
+      content = content
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\s+$/gm, '')
+        .trim();
+
+      if (!content) {
         throw new DocumentationError(
           'No content could be extracted from the page',
           'NO_CONTENT',
@@ -143,16 +382,13 @@ export class DocumentationProcessor {
         );
       }
 
-      // Try to find last updated date
-      const lastUpdated = $('meta[name="last-modified"]').attr('content') ||
-                         $('time[datetime]').attr('datetime') ||
-                         undefined;
-
       return {
         url,
-        title: title.trim() || 'Untitled Documentation',
-        content: content.trim(),
-        lastUpdated,
+        title: title.trim(),
+        content,
+        lastUpdated: $('meta[name="last-modified"]').attr('content') ||
+                    $('meta[property="article:modified_time"]').attr('content') ||
+                    $('time[datetime]').attr('datetime'),
       };
     } catch (error) {
       if (error instanceof DocumentationError) {
@@ -183,7 +419,7 @@ export class DocumentationProcessor {
 
       if (sources.length === 0) {
         throw new DocumentationError(
-          'Failed to generate documentation from any source',
+          'Failed to generate documentation from any source. Please try a different product or check if the documentation is accessible.',
           'NO_CONTENT'
         );
       }
@@ -203,13 +439,7 @@ export class DocumentationProcessor {
         timestamp: source.lastUpdated,
       }));
 
-      const markdown = markdownGenerator.generateMarkdown(sections);
-
-      // 4. Save to file
-      const outputDir = path.join(process.cwd(), 'public', 'docs');
-      const filePath = await markdownGenerator.saveToFile(outputDir);
-
-      return filePath;
+      return markdownGenerator.generateMarkdown(sections);
     } catch (error) {
       if (error instanceof DocumentationError) {
         throw error;

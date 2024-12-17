@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { mkdir } from 'fs/promises'
+import { mkdir, writeFile } from 'fs/promises'
 import path from 'path'
 import { DocumentationProcessor, DocumentationError } from '@/utils/documentationProcessor'
 
@@ -55,10 +55,17 @@ export async function POST(req: Request) {
     const processor = new DocumentationProcessor(product, requirements)
 
     // Generate documentation
-    const filePath = await processor.generateDocumentation()
+    const markdown = await processor.generateDocumentation()
+
+    // Save to file
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const fileName = `${product.toLowerCase()}-docs-${timestamp}.md`
+    const filePath = path.join(docsDir, fileName)
+    
+    await writeFile(filePath, markdown, 'utf-8')
 
     // Convert absolute path to relative URL path
-    const urlPath = '/docs/' + path.basename(filePath)
+    const urlPath = `/docs/${fileName}`
 
     return NextResponse.json<GenerateDocsResponse>({
       success: true,

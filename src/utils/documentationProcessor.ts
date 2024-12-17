@@ -40,9 +40,9 @@ export class DocumentationProcessor {
     // Updated documentation URLs mapping
     const documentationUrls: Record<string, string[]> = {
       'hubspot': [
-        'https://developers.hubspot.com/docs/api/conversations/conversations',
-        'https://developers.hubspot.com/docs/api/crm/tickets',
-        'https://developers.hubspot.com/docs/api/crm/associations/v4',
+        'https://app.hubspot.com/developer-docs/api/conversations/v3/threads',
+        'https://app.hubspot.com/developer-docs/api/crm/tickets',
+        'https://app.hubspot.com/developer-docs/api/crm/associations/v4',
       ],
       'stripe': [
         'https://stripe.com/docs/api',
@@ -74,27 +74,31 @@ export class DocumentationProcessor {
       }
 
       // Special handling for HubSpot API docs
-      const isHubSpotApi = url.includes('api.hubspot.com');
+      const isHubSpotDocs = url.includes('app.hubspot.com/developer-docs');
       const headers: Record<string, string> = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': isHubSpotApi ? 'application/json' : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"macOS"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       };
 
-      // Add browser-like headers for non-API requests
-      if (!isHubSpotApi) {
+      // Add HubSpot-specific headers
+      if (isHubSpotDocs) {
         Object.assign(headers, {
-          'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-          'Sec-Ch-Ua-Mobile': '?0',
-          'Sec-Ch-Ua-Platform': '"macOS"',
-          'Sec-Fetch-Dest': 'document',
-          'Sec-Fetch-Mode': 'navigate',
-          'Sec-Fetch-Site': 'none',
-          'Sec-Fetch-User': '?1',
-          'Upgrade-Insecure-Requests': '1',
+          'X-HubSpot-No-Auth': '1',
+          'X-HubSpot-API-Version': 'v3',
+          'Referer': 'https://app.hubspot.com/',
+          'Origin': 'https://app.hubspot.com',
         });
       }
 
@@ -105,14 +109,12 @@ export class DocumentationProcessor {
         validateStatus: (status) => status < 400,
       });
 
-      // For HubSpot API docs, format the JSON response as markdown
-      if (isHubSpotApi && typeof response.data === 'object') {
-        return this.formatHubSpotApiDocs(response.data, url);
-      }
+      // Wait for client-side rendering
+      await new Promise(resolve => setTimeout(resolve, isHubSpotDocs ? 2000 : 1000));
 
-      // Wait a bit for any client-side rendering for non-API docs
-      if (!isHubSpotApi) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      // For HubSpot API docs, format the JSON response as markdown
+      if (isHubSpotDocs && typeof response.data === 'object') {
+        return this.formatHubSpotApiDocs(response.data, url);
       }
 
       return response.data;
@@ -268,38 +270,38 @@ export class DocumentationProcessor {
       mainContent.find('.navigation, .nav, .search, .sidebar, .footer, .header, .cookie-banner, .announcement, .toolbar, .api-tokens').remove();
 
       // Special handling for HubSpot API docs
-      if (url.includes('developers.hubspot.com')) {
+      if (url.includes('app.hubspot.com/developer-docs')) {
         // Extract API endpoint information
-        mainContent.find('.endpoint-wrapper, .api-endpoint').each((_, elem) => {
+        mainContent.find('[data-test-id="endpoint"], .endpoint-documentation').each((_, elem) => {
           const $endpoint = $(elem);
           
           // Get HTTP method and path
-          const method = $endpoint.find('.http-method, .method').text().trim();
-          const path = $endpoint.find('.path, .endpoint-path').text().trim();
+          const method = $endpoint.find('[data-test-id="method"], .http-method').text().trim();
+          const path = $endpoint.find('[data-test-id="path"], .endpoint-path').text().trim();
           
           if (method && path) {
             content += `### ${method} ${path}\n\n`;
           }
 
           // Get description
-          const description = $endpoint.find('.description, .endpoint-description').text().trim();
+          const description = $endpoint.find('[data-test-id="description"], .endpoint-description').text().trim();
           if (description) {
             content += `${description}\n\n`;
           }
 
           // Get parameters
-          const $params = $endpoint.find('.parameters, .params-wrapper');
+          const $params = $endpoint.find('[data-test-id="parameters"], .parameters-section');
           if ($params.length > 0) {
             content += '#### Parameters\n\n';
             content += '| Name | Type | Required | Description |\n';
             content += '|------|------|----------|-------------|\n';
             
-            $params.find('.parameter, .param-row').each((_, param) => {
+            $params.find('[data-test-id="parameter"], .parameter-row').each((_, param) => {
               const $param = $(param);
-              const name = $param.find('.param-name').text().trim();
-              const type = $param.find('.param-type').text().trim();
-              const required = $param.find('.required').length > 0 ? 'Yes' : 'No';
-              const desc = $param.find('.param-description').text().trim();
+              const name = $param.find('[data-test-id="name"], .param-name').text().trim();
+              const type = $param.find('[data-test-id="type"], .param-type').text().trim();
+              const required = $param.find('[data-test-id="required"], .required-badge').length > 0 ? 'Yes' : 'No';
+              const desc = $param.find('[data-test-id="description"], .param-description').text().trim();
               
               if (name) {
                 content += `| ${name} | ${type || '-'} | ${required} | ${desc || '-'} |\n`;
@@ -309,10 +311,10 @@ export class DocumentationProcessor {
           }
 
           // Get request/response examples
-          $endpoint.find('.example-wrapper, .code-example').each((_, example) => {
+          $endpoint.find('[data-test-id="example"], .example-section').each((_, example) => {
             const $example = $(example);
-            const title = $example.find('.example-title, h4').text().trim();
-            const code = $example.find('pre, code').text().trim();
+            const title = $example.find('[data-test-id="title"], .example-title').text().trim();
+            const code = $example.find('[data-test-id="code"], pre, code').text().trim();
             
             if (code) {
               content += `#### ${title || 'Example'}\n\n`;
@@ -322,6 +324,14 @@ export class DocumentationProcessor {
 
           content += '---\n\n';
         });
+
+        // If no endpoints found, try getting the overview content
+        if (!content) {
+          const overview = mainContent.find('[data-test-id="overview"], .api-overview').text().trim();
+          if (overview) {
+            content = overview + '\n\n';
+          }
+        }
       }
 
       // If no endpoints found, fall back to regular content processing

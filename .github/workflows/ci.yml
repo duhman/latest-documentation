@@ -42,9 +42,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    # Only run Snyk if the token is available
+    - name: Check for Snyk token
+      id: check_token
+      run: |
+        if [ "${{ secrets.SNYK_TOKEN }}" != "" ]; then
+          echo "has_token=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_token=false" >> $GITHUB_OUTPUT
+        fi
+    
     - name: Run Snyk to check for vulnerabilities
-      if: ${{ secrets.SNYK_TOKEN }}
+      if: steps.check_token.outputs.has_token == 'true'
       uses: snyk/actions/node@master
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

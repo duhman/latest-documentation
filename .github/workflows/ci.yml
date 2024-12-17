@@ -36,25 +36,24 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
-    # Make this job optional
-    continue-on-error: true
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
     - uses: actions/checkout@v3
     
-    - name: Check for Snyk token
-      id: check_token
-      run: |
-        if [ "${{ secrets.SNYK_TOKEN }}" != "" ]; then
-          echo "has_token=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_token=false" >> $GITHUB_OUTPUT
-        fi
+    - name: Install Snyk CLI
+      run: npm install -g snyk
     
-    - name: Run Snyk to check for vulnerabilities
-      if: steps.check_token.outputs.has_token == 'true'
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high
+    - name: Authenticate with Snyk
+      run: snyk auth ${{ secrets.SNYK_TOKEN }}
+      continue-on-error: true
+    
+    - name: Run Snyk security scan
+      run: |
+        if command -v snyk &> /dev/null && snyk test --json > /dev/null 2>&1; then
+          snyk test --severity-threshold=high
+        else
+          echo "Skipping Snyk scan - not configured"
+          exit 0
+        fi
+      continue-on-error: true

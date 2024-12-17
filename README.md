@@ -35,22 +35,26 @@ A modern, efficient Next.js application that generates up-to-date API documentat
 ### Installation
 
 1. Clone the repository:
+
     ```bash
     git clone https://github.com/[username]/latest-documentation.git
     cd latest-documentation
     ```
 
 2. Install dependencies:
+
     ```bash
     npm install
     ```
 
 3. Create a `.env.local` file based on `.env.example`:
+
     ```bash
     cp .env.example .env.local
     ```
 
 4. Run the development server:
+
     ```bash
     npm run dev
     ```

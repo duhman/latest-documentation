@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import * as cheerio from 'cheerio';
 import path from 'path';
 import { MarkdownGenerator, formatCodeBlock, formatNote, formatWarning } from './markdownGenerator';
+import { FirecrawlClient } from './firecrawl';
 
 interface DocumentationSource {
   url: string;
@@ -13,7 +14,7 @@ interface DocumentationSource {
 export class DocumentationError extends Error {
   constructor(
     message: string,
-    public readonly code: 'FETCH_ERROR' | 'PARSE_ERROR' | 'NO_CONTENT' | 'INVALID_SOURCE',
+    public readonly code: 'FETCH_ERROR' | 'PARSE_ERROR' | 'NO_CONTENT' | 'INVALID_SOURCE' | 'EXTRACTION_ERROR' | 'PROCESSING_ERROR',
     public readonly sourceUrl?: string
   ) {
     super(message);
@@ -22,18 +23,14 @@ export class DocumentationError extends Error {
 }
 
 export class DocumentationProcessor {
-  private product: string;
-  private requirements: string;
-  private maxRetries: number = 3;
-  private retryDelay: number = 1000; // 1 second
+  private firecrawl: FirecrawlClient;
+  private maxRetries: number;
+  private retryDelay: number;
 
-  constructor(product: string, requirements: string) {
-    this.product = product.trim();
-    this.requirements = requirements.trim();
-
-    if (!this.product) {
-      throw new DocumentationError('Product name is required', 'INVALID_SOURCE');
-    }
+  constructor(maxRetries = 3, retryDelay = 1000) {
+    this.firecrawl = new FirecrawlClient();
+    this.maxRetries = maxRetries;
+    this.retryDelay = retryDelay;
   }
 
   private async searchDocumentation(): Promise<string[]> {
@@ -55,10 +52,10 @@ export class DocumentationProcessor {
       // Add more products here
     };
 
-    const urls = documentationUrls[this.product.toLowerCase()] || [];
+    const urls = documentationUrls['hubspot'] || [];
     if (urls.length === 0) {
       throw new DocumentationError(
-        `No documentation sources found for ${this.product}. Supported products: ${Object.keys(documentationUrls).join(', ')}`,
+        `No documentation sources found for ${'hubspot'}. Supported products: ${Object.keys(documentationUrls).join(', ')}`,
         'INVALID_SOURCE'
       );
     }
@@ -66,350 +63,158 @@ export class DocumentationProcessor {
     return urls;
   }
 
-  private async fetchWithRetry(url: string, retries = this.maxRetries): Promise<string> {
+  async processDocumentation(url: string): Promise<string> {
     try {
-      // Add a small delay between retries to avoid rate limiting
-      if (this.maxRetries - retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, this.retryDelay * (this.maxRetries - retries)));
-      }
-
-      // Special handling for HubSpot API docs
-      const isHubSpotDocs = url.includes('app.hubspot.com/developer-docs');
-      const headers: Record<string, string> = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"macOS"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1',
-      };
-
-      // Add HubSpot-specific headers
-      if (isHubSpotDocs) {
-        Object.assign(headers, {
-          'X-HubSpot-No-Auth': '1',
-          'X-HubSpot-API-Version': 'v3',
-          'Referer': 'https://app.hubspot.com/',
-          'Origin': 'https://app.hubspot.com',
-        });
-      }
-
-      const response = await axios.get(url, {
-        timeout: 15000,
-        headers,
-        maxRedirects: 5,
-        validateStatus: (status) => status < 400,
-      });
-
-      // Wait for client-side rendering
-      await new Promise(resolve => setTimeout(resolve, isHubSpotDocs ? 2000 : 1000));
-
-      // For HubSpot API docs, format the JSON response as markdown
-      if (isHubSpotDocs && typeof response.data === 'object') {
-        return this.formatHubSpotApiDocs(response.data, url);
-      }
-
-      return response.data;
-    } catch (error) {
-      if (retries > 0 && error instanceof AxiosError && error.response?.status !== 404) {
-        return this.fetchWithRetry(url, retries - 1);
-      }
+      // Configure crawl options based on the URL
+      const options = this.getCrawlOptions(url);
       
-      if (error instanceof AxiosError) {
-        const status = error.response?.status;
-        if (status === 404) {
-          throw new DocumentationError(`Documentation page not found: ${url}`, 'FETCH_ERROR', url);
-        } else if (status === 403) {
-          throw new DocumentationError(`Access denied to documentation: ${url}. The page might require authentication.`, 'FETCH_ERROR', url);
-        }
-        throw new DocumentationError(
-          `Failed to fetch documentation: ${error.message}`,
-          'FETCH_ERROR',
-          url
-        );
-      }
-      throw error;
-    }
-  }
-
-  private formatHubSpotApiDocs(data: any, url: string): string {
-    let content = '';
-
-    // Add API description if available
-    if (data.description) {
-      content += `${data.description}\n\n`;
-    }
-
-    // Add endpoints
-    if (data.paths) {
-      Object.entries(data.paths).forEach(([path, methods]: [string, any]) => {
-        Object.entries(methods).forEach(([method, details]: [string, any]) => {
-          content += `### ${method.toUpperCase()} ${path}\n\n`;
-          
-          if (details.summary) {
-            content += `${details.summary}\n\n`;
-          }
-          
-          if (details.description) {
-            content += `${details.description}\n\n`;
-          }
-
-          // Parameters
-          if (details.parameters?.length > 0) {
-            content += `#### Parameters\n\n`;
-            content += '| Name | Type | Required | Description |\n';
-            content += '|------|------|----------|-------------|\n';
-            details.parameters.forEach((param: any) => {
-              content += `| ${param.name} | ${param.type || param.schema?.type || '-'} | ${param.required ? 'Yes' : 'No'} | ${param.description || '-'} |\n`;
-            });
-            content += '\n';
-          }
-
-          // Request body
-          if (details.requestBody?.content) {
-            content += `#### Request Body\n\n`;
-            const schema = details.requestBody.content['application/json']?.schema;
-            if (schema) {
-              if (schema.properties) {
-                content += '| Property | Type | Required | Description |\n';
-                content += '|----------|------|----------|-------------|\n';
-                Object.entries(schema.properties).forEach(([name, prop]: [string, any]) => {
-                  const required = schema.required?.includes(name) ? 'Yes' : 'No';
-                  content += `| ${name} | ${prop.type || '-'} | ${required} | ${prop.description || '-'} |\n`;
-                });
-                content += '\n';
-              }
-            }
-          }
-
-          // Response
-          if (details.responses) {
-            content += `#### Responses\n\n`;
-            Object.entries(details.responses).forEach(([code, response]: [string, any]) => {
-              content += `**${code}**: ${response.description || '-'}\n\n`;
-              if (response.content?.['application/json']?.schema) {
-                content += `Response schema:\n\`\`\`json\n${JSON.stringify(response.content['application/json'].schema, null, 2)}\n\`\`\`\n\n`;
-              }
-            });
-          }
-        });
-      });
-    }
-
-    if (!content) {
-      throw new DocumentationError(
-        'No content could be extracted from the API documentation',
-        'NO_CONTENT',
-        url
-      );
-    }
-
-    return content;
-  }
-
-  private async crawlPage(url: string): Promise<DocumentationSource> {
-    try {
-      const html = await this.fetchWithRetry(url);
-      const $ = cheerio.load(html);
-
-      // Remove unnecessary elements
-      $('script, style, nav, footer, header, iframe, .cookie-banner, .advertisement').remove();
-
-      // Extract main content
-      const title = $('h1').first().text() || 
-                   $('title').text() || 
-                   $('meta[property="og:title"]').attr('content') ||
-                   'Untitled Documentation';
-
-      let content = '';
-
-      // Try multiple content selectors
-      const mainSelectors = [
-        'main',
-        'article',
-        '.content',
-        '.documentation',
-        '.docs-content',
-        '#main-content',
-        '.main-content',
-        '.markdown-body',
-        '.api-content',
-        '.api-documentation',
-        '.reference-content',
-        '[role="main"]',
-        '[data-testid="api-content"]',
-        '#api-reference',
-        '.content-wrap', // HubSpot specific
-        '.content-body', // HubSpot specific
-        '.api-endpoint-documentation', // HubSpot specific
-      ];
-
-      let mainContent = $();
-      for (const selector of mainSelectors) {
-        const found = $(selector);
-        if (found.length > 0) {
-          mainContent = found;
-          break;
-        }
-      }
-
-      // If no main content found, try the body
-      if (mainContent.length === 0) {
-        mainContent = $('body');
-      }
-
-      // Remove navigation, search, and other non-content elements
-      mainContent.find('.navigation, .nav, .search, .sidebar, .footer, .header, .cookie-banner, .announcement, .toolbar, .api-tokens').remove();
-
-      // Special handling for HubSpot API docs
-      if (url.includes('app.hubspot.com/developer-docs')) {
-        // Extract API endpoint information
-        mainContent.find('[data-test-id="endpoint"], .endpoint-documentation').each((_, elem) => {
-          const $endpoint = $(elem);
-          
-          // Get HTTP method and path
-          const method = $endpoint.find('[data-test-id="method"], .http-method').text().trim();
-          const path = $endpoint.find('[data-test-id="path"], .endpoint-path').text().trim();
-          
-          if (method && path) {
-            content += `### ${method} ${path}\n\n`;
-          }
-
-          // Get description
-          const description = $endpoint.find('[data-test-id="description"], .endpoint-description').text().trim();
-          if (description) {
-            content += `${description}\n\n`;
-          }
-
-          // Get parameters
-          const $params = $endpoint.find('[data-test-id="parameters"], .parameters-section');
-          if ($params.length > 0) {
-            content += '#### Parameters\n\n';
-            content += '| Name | Type | Required | Description |\n';
-            content += '|------|------|----------|-------------|\n';
-            
-            $params.find('[data-test-id="parameter"], .parameter-row').each((_, param) => {
-              const $param = $(param);
-              const name = $param.find('[data-test-id="name"], .param-name').text().trim();
-              const type = $param.find('[data-test-id="type"], .param-type').text().trim();
-              const required = $param.find('[data-test-id="required"], .required-badge').length > 0 ? 'Yes' : 'No';
-              const desc = $param.find('[data-test-id="description"], .param-description').text().trim();
-              
-              if (name) {
-                content += `| ${name} | ${type || '-'} | ${required} | ${desc || '-'} |\n`;
-              }
-            });
-            content += '\n';
-          }
-
-          // Get request/response examples
-          $endpoint.find('[data-test-id="example"], .example-section').each((_, example) => {
-            const $example = $(example);
-            const title = $example.find('[data-test-id="title"], .example-title').text().trim();
-            const code = $example.find('[data-test-id="code"], pre, code').text().trim();
-            
-            if (code) {
-              content += `#### ${title || 'Example'}\n\n`;
-              content += '```json\n' + code + '\n```\n\n';
-            }
-          });
-
-          content += '---\n\n';
-        });
-
-        // If no endpoints found, try getting the overview content
-        if (!content) {
-          const overview = mainContent.find('[data-test-id="overview"], .api-overview').text().trim();
-          if (overview) {
-            content = overview + '\n\n';
-          }
-        }
-      }
-
-      // If no endpoints found, fall back to regular content processing
-      if (!content) {
-        // Process regular headings and text
-        mainContent.find('h1, h2, h3, h4, h5, h6, p, ul, ol, table').each((_, elem) => {
-          const $elem = $(elem);
-          const text = $elem.text().trim();
-          
-          if (text) {
-            if (elem.tagName.match(/^h[1-6]$/)) {
-              const level = elem.tagName[1];
-              content += `${'#'.repeat(parseInt(level))} ${text}\n\n`;
-            } else if (elem.tagName === 'ul' || elem.tagName === 'ol') {
-              $elem.find('li').each((_, li) => {
-                content += `- ${$(li).text().trim()}\n`;
-              });
-              content += '\n';
-            } else if (elem.tagName === 'table') {
-              // Convert table to markdown
-              const rows: string[][] = [];
-              $elem.find('tr').each((_, tr) => {
-                const row: string[] = [];
-                $(tr).find('th, td').each((_, cell) => {
-                  row.push($(cell).text().trim());
-                });
-                if (row.length > 0) {
-                  rows.push(row);
-                }
-              });
-              
-              if (rows.length > 0) {
-                content += '| ' + rows[0].join(' | ') + ' |\n';
-                content += '| ' + rows[0].map(() => '---').join(' | ') + ' |\n';
-                rows.slice(1).forEach(row => {
-                  content += '| ' + row.join(' | ') + ' |\n';
-                });
-                content += '\n';
-              }
-            } else {
-              content += `${text}\n\n`;
-            }
-          }
-        });
-      }
-
-      // Clean up content
-      content = content
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/\s+$/gm, '')
-        .trim();
-
+      // Use Firecrawl to extract content
+      const content = await this.firecrawl.crawl(url, options);
+      
       if (!content) {
         throw new DocumentationError(
-          'No content could be extracted from the page',
-          'NO_CONTENT',
+          'No content could be extracted from the documentation page.',
+          'EXTRACTION_ERROR',
           url
         );
       }
 
-      return {
-        url,
-        title: title.trim(),
-        content,
-        lastUpdated: $('meta[name="last-modified"]').attr('content') ||
-                    $('meta[property="article:modified_time"]').attr('content') ||
-                    $('time[datetime]').attr('datetime'),
-      };
+      return this.formatContent(content, url);
     } catch (error) {
       if (error instanceof DocumentationError) {
         throw error;
       }
       throw new DocumentationError(
-        `Error processing documentation: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'PARSE_ERROR',
+        `Failed to process documentation: ${error.message}`,
+        'PROCESSING_ERROR',
         url
       );
     }
+  }
+
+  private getCrawlOptions(url: string) {
+    const isHubSpot = url.includes('app.hubspot.com/developer-docs');
+    
+    return {
+      waitForSelectors: isHubSpot ? [
+        '[data-test-id="endpoint"]',
+        '[data-test-id="overview"]'
+      ] : undefined,
+      waitForTimeout: isHubSpot ? 2000 : 1000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      extractors: isHubSpot ? this.getHubSpotExtractors() : this.getDefaultExtractors(),
+    };
+  }
+
+  private getHubSpotExtractors() {
+    return {
+      endpoints: {
+        selector: '[data-test-id="endpoint"]',
+        multiple: true,
+        extract: {
+          method: '[data-test-id="method"]',
+          path: '[data-test-id="path"]',
+          description: '[data-test-id="description"]',
+          parameters: {
+            selector: '[data-test-id="parameter"]',
+            multiple: true,
+            extract: {
+              name: '[data-test-id="name"]',
+              type: '[data-test-id="type"]',
+              required: {
+                selector: '[data-test-id="required"]',
+                transform: (el) => el ? 'Yes' : 'No'
+              },
+              description: '[data-test-id="description"]'
+            }
+          },
+          examples: {
+            selector: '[data-test-id="example"]',
+            multiple: true,
+            extract: {
+              title: '[data-test-id="title"]',
+              code: 'pre, code'
+            }
+          }
+        }
+      },
+      overview: {
+        selector: '[data-test-id="overview"]',
+        optional: true
+      }
+    };
+  }
+
+  private getDefaultExtractors() {
+    return {
+      content: {
+        selector: 'article, main, .content, .documentation',
+        transform: (el) => {
+          // Remove navigation, headers, footers etc.
+          el.querySelectorAll('.navigation, .nav, .search, .sidebar, .footer, .header').forEach(node => node.remove());
+          return el.textContent;
+        }
+      }
+    };
+  }
+
+  private formatContent(content: any, url: string): string {
+    if (url.includes('app.hubspot.com/developer-docs')) {
+      return this.formatHubSpotContent(content);
+    }
+    return this.formatDefaultContent(content);
+  }
+
+  private formatHubSpotContent(content: any): string {
+    let markdown = '';
+
+    // Add overview if present
+    if (content.overview) {
+      markdown += `${content.overview}\n\n---\n\n`;
+    }
+
+    // Format endpoints
+    if (content.endpoints) {
+      content.endpoints.forEach((endpoint: any) => {
+        markdown += `### ${endpoint.method} ${endpoint.path}\n\n`;
+        
+        if (endpoint.description) {
+          markdown += `${endpoint.description}\n\n`;
+        }
+
+        if (endpoint.parameters?.length > 0) {
+          markdown += '#### Parameters\n\n';
+          markdown += '| Name | Type | Required | Description |\n';
+          markdown += '|------|------|----------|-------------|\n';
+          
+          endpoint.parameters.forEach((param: any) => {
+            markdown += `| ${param.name} | ${param.type || '-'} | ${param.required} | ${param.description || '-'} |\n`;
+          });
+          markdown += '\n';
+        }
+
+        if (endpoint.examples?.length > 0) {
+          endpoint.examples.forEach((example: any) => {
+            markdown += `#### ${example.title || 'Example'}\n\n`;
+            markdown += '```json\n' + example.code + '\n```\n\n';
+          });
+        }
+
+        markdown += '---\n\n';
+      });
+    }
+
+    return markdown.trim();
+  }
+
+  private formatDefaultContent(content: any): string {
+    if (typeof content === 'string') {
+      return content.trim();
+    }
+    return content.content.trim();
   }
 
   async generateDocumentation(): Promise<string> {
@@ -419,13 +224,13 @@ export class DocumentationProcessor {
 
       // 2. Crawl all pages
       const sourcesPromises = urls.map(url => 
-        this.crawlPage(url).catch(error => {
+        this.processDocumentation(url).catch(error => {
           console.error(`Failed to process ${url}:`, error);
           return null;
         })
       );
 
-      const sources = (await Promise.all(sourcesPromises)).filter((source): source is DocumentationSource => source !== null);
+      const sources = (await Promise.all(sourcesPromises)).filter((source): source is string => source !== null);
 
       if (sources.length === 0) {
         throw new DocumentationError(
@@ -436,17 +241,17 @@ export class DocumentationProcessor {
 
       // 3. Generate markdown
       const markdownGenerator = new MarkdownGenerator({
-        product: this.product,
+        product: 'hubspot',
         generatedAt: new Date().toISOString(),
-        requirements: this.requirements,
+        requirements: '',
         sources: urls,
       });
 
-      const sections = sources.map(source => ({
-        title: source.title,
-        content: source.content,
-        sourceUrl: source.url,
-        timestamp: source.lastUpdated,
+      const sections = sources.map((source, index) => ({
+        title: `Documentation ${index + 1}`,
+        content: source,
+        sourceUrl: urls[index],
+        timestamp: '',
       }));
 
       return markdownGenerator.generateMarkdown(sections);

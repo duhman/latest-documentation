@@ -6,7 +6,7 @@
   "framework": "nextjs",
   "regions": ["fra1"],
   "functions": {
-    "api/**/*.ts": {
+    "api/**/*": {
       "memory": 1024,
       "maxDuration": 60
     }

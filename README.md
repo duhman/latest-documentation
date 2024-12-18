@@ -1,180 +1,110 @@
 # Latest Documentation Generator
 
-[![CI](https://github.com/[username]/latest-documentation/actions/workflows/ci.yml/badge.svg)](https://github.com/[username]/latest-documentation/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.0.0-black.svg)](https://nextjs.org/)
+A powerful documentation generator that crawls and processes API documentation from various sources, with special support for HubSpot's API documentation.
 
-A modern, efficient Next.js application that generates up-to-date API documentation for software products in markdown format. Specifically designed for Large Language Models (LLMs) and agentic IDEs, this tool ensures your documentation stays current and accessible.
+## Features
 
-## 🌟 Features
+- 🔍 Intelligent crawling with Firecrawl technology
+- 📚 Specialized support for HubSpot API documentation
+- 🎯 Extracts endpoints, parameters, examples, and descriptions
+- 📝 Generates clean, well-formatted Markdown output
+- 🔄 Handles dynamic, JavaScript-rendered content
+- ⚡ Efficient parallel processing of multiple documentation pages
 
-1. **Automated Documentation Generation**: Automatically generates latest API documentation from official sources
-2. **Multi-Product Support**: Handles documentation for multiple software products simultaneously
-3. **Markdown Output**: Generates clean, structured markdown files optimized for LLMs
-4. **Modern UI/UX**: Built with Shadcn UI components for a beautiful, responsive interface
-5. **Advanced Architecture**:
-    - Next.js 14 App Router for optimal performance
-    - Vercel AI integration for enhanced documentation processing
-    - Rate limiting and security features built-in
-    - Error handling and retry mechanisms
-6. **Developer Experience**:
-    - TypeScript for type safety
-    - ESLint and Prettier for code quality
-    - GitHub Actions for CI/CD
-    - Comprehensive documentation
+## Prerequisites
 
-## 🚀 Getting Started
+- Node.js 16.x or later
+- npm 7.x or later
 
-### Prerequisites
-
-- Node.js 18.x or later
-- npm
-- Git
-
-### Installation
+## Installation
 
 1. Clone the repository:
 
-    ```bash
-    git clone https://github.com/[username]/latest-documentation.git
-    cd latest-documentation
-    ```
-
-2. Install dependencies:
-
-    ```bash
-    npm install
-    ```
-
-3. Create a `.env.local` file based on `.env.example`:
-
-    ```bash
-    cp .env.example .env.local
-    ```
-
-4. Run the development server:
-
-    ```bash
-    npm run dev
-    ```
-
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## 💻 Usage
-
-1. **Start Documentation Generation**:
-    - Enter the product name (e.g., HubSpot, Stripe)
-    - Specify documentation requirements and preferences
-    - Click "Generate Documentation"
-
-2. **View Results**:
-    - Generated markdown files are saved in `public/docs`
-    - Each product gets its own documentation structure
-    - Files are optimized for LLM consumption
-
-3. **API Integration**:
-    - Use the REST API endpoint at `/api/generate-docs`
-    - Rate limiting applies to prevent abuse
-    - Proper error handling included
-
-## 🏗️ Architecture
-
-### Tech Stack
-
-- **Frontend**:
-  - Next.js 14
-  - React 18
-  - Tailwind CSS
-  - Shadcn UI
-  - TypeScript
-
-- **Backend**:
-  - Next.js API Routes
-  - Vercel AI SDK
-  - Rate Limiting
-  - Error Handling
-
-- **Development**:
-  - TypeScript
-  - ESLint
-  - Prettier
-  - GitHub Actions
-
-### Project Structure
-
-```javascript
-latest-documentation/
-├── src/                 # Next.js App Router
-│   ├── app/            # API endpoints
-│   │   ├── layout.tsx  # Root layout
-│   │   └── page.tsx    # Home page
-│   ├── components/     # React components
-│   └── utils/          # Utility functions
-├── public/             # Static files
-│   └── docs/          # Generated documentation
-├── .github/           # GitHub configuration
-├── next.config.js     # Next.js configuration
-└── package.json       # Dependencies
+```bash
+git clone https://github.com/[username]/latest-documentation.git
+cd latest-documentation
 ```
 
-## 🚀 Deployment
+1. Install dependencies:
 
-### Vercel Deployment
+```bash
+npm install
+```
 
-1. Push your code to GitHub
-2. Visit [Vercel](https://vercel.com)
-3. Import your repository
-4. Configure environment variables:
-    - `NEXT_PUBLIC_API_URL`
-    - `RATE_LIMIT_MAX_REQUESTS`
-    - `REQUEST_TIMEOUT_MS`
-5. Click "Deploy"
+## Usage
 
-### Configuration Files
+1. Start the development server:
 
-- `vercel.json`: Deployment settings
-- `next.config.js`: Next.js configuration
-- `.env.example`: Environment variables template
+```bash
+npm run dev
+```
 
-## 🤝 Contributing
+1. Access the documentation generator at `http://localhost:3000`
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+1. To generate documentation programmatically:
 
-1. Code of Conduct
-2. Development process
-3. How to submit pull requests
-4. Coding standards
+```typescript
+import { DocumentationProcessor } from './utils/documentationProcessor';
 
-## 🔒 Security
+const processor = new DocumentationProcessor();
 
-- Rate limiting on all API endpoints
-- Input validation and sanitization
-- Security headers configured
-- Regular dependency updates
-- Automated security scanning with Snyk (optional)
-- Please report security vulnerabilities to [security@yourdomain.com]
+// Generate documentation for a specific URL
+const markdown = await processor.processDocumentation('https://app.hubspot.com/developer-docs/...');
 
-### Security Scanning
+// Or generate documentation for all configured sources
+const fullDocs = await processor.generateDocumentation();
+```
 
-This project uses Snyk for automated security scanning. To enable it:
+## Configuration
 
-1. Sign up for a [Snyk account](https://snyk.io)
-2. Get your Snyk API token
-3. Add the token to your GitHub repository:
-    - Go to Settings > Secrets and variables > Actions
-    - Add a new secret named `SNYK_TOKEN`
-    - Paste your Snyk API token as the value
+The documentation processor can be configured with various options:
 
-The security scanning will run automatically on every push and pull request.
+```typescript
+const options = {
+  waitForSelectors: ['[data-test-id="endpoint"]'], // Elements to wait for
+  waitForTimeout: 2000, // Timeout in milliseconds
+  headers: {            // Custom headers for requests
+    'User-Agent': '...',
+    'Accept': '...'
+  },
+  extractors: {         // Content extraction rules
+    endpoints: {
+      selector: '...',
+      multiple: true,
+      extract: {
+        // Nested extraction rules
+      }
+    }
+  }
+};
+```
 
-## 📄 License
+## Architecture
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The project uses a modular architecture with the following key components:
 
-## 🙏 Acknowledgments
+- `DocumentationProcessor`: Main class for processing documentation
+- `FirecrawlClient`: Handles browser automation and content extraction
+- `MarkdownGenerator`: Converts extracted content to markdown format
 
-- [Next.js](https://nextjs.org/) team for the amazing framework
-- [Vercel](https://vercel.com) for hosting and deployment
-- [Shadcn UI](https://ui.shadcn.com/) for beautiful components
-- All our contributors and users
+## Error Handling
+
+The system provides detailed error information through the `DocumentationError` class:
+
+- `FETCH_ERROR`: Failed to fetch the documentation page
+- `PARSE_ERROR`: Failed to parse the content
+- `NO_CONTENT`: No content could be extracted
+- `EXTRACTION_ERROR`: Failed to extract specific content
+- `PROCESSING_ERROR`: General processing error
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

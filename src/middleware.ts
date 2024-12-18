@@ -18,11 +18,11 @@ export function middleware(request: NextRequest) {
   const now = Date.now()
 
   // Clean up old entries
-  for (const [key, value] of rateLimit.entries()) {
+  Array.from(rateLimit.entries()).forEach(([key, value]) => {
     if (now - value.timestamp > RATE_LIMIT_WINDOW) {
       rateLimit.delete(key)
     }
-  }
+  })
 
   // Get or create rate limit entry
   const rateLimitInfo = rateLimit.get(ip) ?? { count: 0, timestamp: now }

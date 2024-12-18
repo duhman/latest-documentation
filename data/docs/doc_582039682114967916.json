@@ -1,0 +1,95 @@
+{
+  "title": "json â JSON encoder and decoder — Python 3.13.1 documentation",
+  "content": [
+    {
+      "type": "function_signature",
+      "text": "json.dump(obj,fp,*,skipkeys=False,ensure_ascii=True,check_circular=True,allow_nan=True,cls=None,indent=None,separators=None,default=None,sort_keys=False,**kw)Â¶"
+    },
+    {
+      "type": "function_description",
+      "text": "Serializeobjas a JSON formatted stream tofp(a.write()-supportingfile-like object) using thisconversion table. Ifskipkeysis true (default:False), then dict keys that are not\nof a basic type (str,int,float,bool,None) will be skipped instead of raising aTypeError. Thejsonmodule always producesstrobjects, notbytesobjects. Therefore,fp.write()must supportstrinput. Ifensure_asciiis true (the default), the output is guaranteed to\nhave all incoming non-ASCII characters escaped.  Ifensure_asciiis\nfalse, these characters will be output as-is. Ifcheck_circularis false (default:True), then the circular\nreference check for container types will be skipped and a circular reference\nwill result in aRecursionError(or worse). Ifallow_nanis false (default:True), then it will be aValueErrorto serialize out of rangefloatvalues (nan,inf,-inf) in strict compliance of the JSON specification.\nIfallow_nanis true, their JavaScript equivalents (NaN,Infinity,-Infinity) will be used. Ifindentis a non-negative integer or string, then JSON array elements and\nobject members will be pretty-printed with that indent level.  An indent level\nof 0, negative, or\"\"will only insert newlines.None(the default)\nselects the most compact representation. Using a positive integer indent\nindents that many spaces per level.  Ifindentis a string (such as\"\\t\"),\nthat string is used to indent each level. Changed in version 3.2:Allow strings forindentin addition to integers. If specified,separatorsshould be an(item_separator,key_separator)tuple.  The default is(',',':')ifindentisNoneand(',',':')otherwise.  To get the most compact JSON representation,\nyou should specify(',',':')to eliminate whitespace. Changed in version 3.4:Use(',',':')as default ifindentis notNone. If specified,defaultshould be a function that gets called for objects that\ncanât otherwise be serialized.  It should return a JSON encodable version of\nthe object or raise aTypeError.  If not specified,TypeErroris raised. Ifsort_keysis true (default:False), then the output of\ndictionaries will be sorted by key. To use a customJSONEncodersubclass (e.g. one that overrides thedefault()method to serialize additional types), specify it with theclskwarg; otherwiseJSONEncoderis used. Changed in version 3.6:All optional parameters are nowkeyword-only. NoteUnlikepickleandmarshal, JSON is not a framed protocol,\nso trying to serialize multiple objects with repeated calls todump()using the samefpwill result in an invalid JSON file."
+    },
+    {
+      "type": "function_signature",
+      "text": "json.dumps(obj,*,skipkeys=False,ensure_ascii=True,check_circular=True,allow_nan=True,cls=None,indent=None,separators=None,default=None,sort_keys=False,**kw)Â¶"
+    },
+    {
+      "type": "function_description",
+      "text": "Serializeobjto a JSON formattedstrusing thisconversion\ntable.  The arguments have the same meaning as indump(). NoteKeys in key/value pairs of JSON are always of the typestr. When\na dictionary is converted into JSON, all the keys of the dictionary are\ncoerced to strings. As a result of this, if a dictionary is converted\ninto JSON and then back into a dictionary, the dictionary may not equal\nthe original one. That is,loads(dumps(x))!=xif x has non-string\nkeys."
+    },
+    {
+      "type": "function_signature",
+      "text": "json.load(fp,*,cls=None,object_hook=None,parse_float=None,parse_int=None,parse_constant=None,object_pairs_hook=None,**kw)Â¶"
+    },
+    {
+      "type": "function_description",
+      "text": "Deserializefp(a.read()-supportingtext fileorbinary filecontaining a JSON document) to a Python object using\nthisconversion table. object_hookis an optional function that will be called with the result of\nany object literal decoded (adict).  The return value ofobject_hookwill be used instead of thedict.  This feature can\nbe used to implement custom decoders (e.g.JSON-RPCclass hinting). object_pairs_hookis an optional function that will be called with the\nresult of any object literal decoded with an ordered list of pairs.  The\nreturn value ofobject_pairs_hookwill be used instead of thedict.  This feature can be used to implement custom decoders.  Ifobject_hookis also defined, theobject_pairs_hooktakes priority. Changed in version 3.1:Added support forobject_pairs_hook. parse_floatis an optional function that will be called with the string of\nevery JSON float to be decoded.  By default, this is equivalent tofloat(num_str).  This can be used to use another datatype or parser for\nJSON floats (e.g.decimal.Decimal). parse_intis an optional function that will be called with the string of\nevery JSON int to be decoded.  By default, this is equivalent toint(num_str).  This can be used to use another datatype or parser for\nJSON integers (e.g.float). Changed in version 3.11:The defaultparse_intofint()now limits the maximum length of\nthe integer string via the interpreterâsinteger string\nconversion length limitationto help avoid denial\nof service attacks. parse_constantis an optional function that will be called with one of the\nfollowing strings:'-Infinity','Infinity','NaN'.  This can be\nused to raise an exception if invalid JSON numbers are encountered. Changed in version 3.1:parse_constantdoesnât get called on ânullâ, âtrueâ, âfalseâ anymore. To use a customJSONDecodersubclass, specify it with theclskwarg; otherwiseJSONDecoderis used.  Additional keyword arguments\nwill be passed to the constructor of the class. If the data being deserialized is not a valid JSON document, aJSONDecodeErrorwill be raised. Changed in version 3.6:All optional parameters are nowkeyword-only. Changed in version 3.6:fpcan now be abinary file. The input encoding should be\nUTF-8, UTF-16 or UTF-32."
+    },
+    {
+      "type": "function_signature",
+      "text": "json.loads(s,*,cls=None,object_hook=None,parse_float=None,parse_int=None,parse_constant=None,object_pairs_hook=None,**kw)Â¶"
+    },
+    {
+      "type": "function_description",
+      "text": "Deserializes(astr,bytesorbytearrayinstance containing a JSON document) to a Python object using thisconversion table. The other arguments have the same meaning as inload(). If the data being deserialized is not a valid JSON document, aJSONDecodeErrorwill be raised. Changed in version 3.6:scan now be of typebytesorbytearray. The\ninput encoding should be UTF-8, UTF-16 or UTF-32. Changed in version 3.9:The keyword argumentencodinghas been removed."
+    },
+    {
+      "type": "class_signature",
+      "text": "classjson.JSONDecoder(*,object_hook=None,parse_float=None,parse_int=None,parse_constant=None,strict=True,object_pairs_hook=None)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "Simple JSON decoder. Performs the following translations in decoding by default: It also understandsNaN,Infinity, and-Infinityas their\ncorrespondingfloatvalues, which is outside the JSON spec. object_hookis an optional function that will be called with the result of\nevery JSON object decoded and its return value will be used in place of the\ngivendict.  This can be used to provide custom deserializations\n(e.g. to supportJSON-RPCclass hinting). object_pairs_hookis an optional function that will be called with the\nresult of every JSON object decoded with an ordered list of pairs.  The\nreturn value ofobject_pairs_hookwill be used instead of thedict.  This feature can be used to implement custom decoders.  Ifobject_hookis also defined, theobject_pairs_hooktakes priority. Changed in version 3.1:Added support forobject_pairs_hook. parse_floatis an optional function that will be called with the string of\nevery JSON float to be decoded.  By default, this is equivalent tofloat(num_str).  This can be used to use another datatype or parser for\nJSON floats (e.g.decimal.Decimal). parse_intis an optional function that will be called with the string of\nevery JSON int to be decoded.  By default, this is equivalent toint(num_str).  This can be used to use another datatype or parser for\nJSON integers (e.g.float). parse_constantis an optional function that will be called with one of the\nfollowing strings:'-Infinity','Infinity','NaN'.  This can be\nused to raise an exception if invalid JSON numbers are encountered. Ifstrictis false (Trueis the default), then control characters\nwill be allowed inside strings.  Control characters in this context are\nthose with character codes in the 0â31 range, including'\\t'(tab),'\\n','\\r'and'\\0'. If the data being deserialized is not a valid JSON document, aJSONDecodeErrorwill be raised. Changed in version 3.6:All parameters are nowkeyword-only."
+    },
+    {
+      "type": "method_signature",
+      "text": "decode(s)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the Python representation ofs(astrinstance\ncontaining a JSON document). JSONDecodeErrorwill be raised if the given JSON document is not\nvalid."
+    },
+    {
+      "type": "method_signature",
+      "text": "raw_decode(s)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Decode a JSON document froms(astrbeginning with a\nJSON document) and return a 2-tuple of the Python representation\nand the index inswhere the document ended. This can be used to decode a JSON document from a string that may have\nextraneous data at the end."
+    },
+    {
+      "type": "class_signature",
+      "text": "classjson.JSONEncoder(*,skipkeys=False,ensure_ascii=True,check_circular=True,allow_nan=True,sort_keys=False,indent=None,separators=None,default=None)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "Extensible JSON encoder for Python data structures. Supports the following objects and types by default: Changed in version 3.4:Added support for int- and float-derived Enum classes. To extend this to recognize other objects, subclass and implement adefault()method with another method that returns a serializable object\nforoif possible, otherwise it should call the superclass implementation\n(to raiseTypeError). Ifskipkeysis false (the default), aTypeErrorwill be raised when\ntrying to encode keys that are notstr,int,floatorNone.  Ifskipkeysis true, such items are simply skipped. Ifensure_asciiis true (the default), the output is guaranteed to\nhave all incoming non-ASCII characters escaped.  Ifensure_asciiis\nfalse, these characters will be output as-is. Ifcheck_circularis true (the default), then lists, dicts, and custom\nencoded objects will be checked for circular references during encoding to\nprevent an infinite recursion (which would cause aRecursionError).\nOtherwise, no such check takes place. Ifallow_nanis true (the default), thenNaN,Infinity, and-Infinitywill be encoded as such.  This behavior is not JSON\nspecification compliant, but is consistent with most JavaScript based\nencoders and decoders.  Otherwise, it will be aValueErrorto encode\nsuch floats. Ifsort_keysis true (default:False), then the output of dictionaries\nwill be sorted by key; this is useful for regression tests to ensure that\nJSON serializations can be compared on a day-to-day basis. Ifindentis a non-negative integer or string, then JSON array elements and\nobject members will be pretty-printed with that indent level.  An indent level\nof 0, negative, or\"\"will only insert newlines.None(the default)\nselects the most compact representation. Using a positive integer indent\nindents that many spaces per level.  Ifindentis a string (such as\"\\t\"),\nthat string is used to indent each level. Changed in version 3.2:Allow strings forindentin addition to integers. If specified,separatorsshould be an(item_separator,key_separator)tuple.  The default is(',',':')ifindentisNoneand(',',':')otherwise.  To get the most compact JSON representation,\nyou should specify(',',':')to eliminate whitespace. Changed in version 3.4:Use(',',':')as default ifindentis notNone. If specified,defaultshould be a function that gets called for objects that\ncanât otherwise be serialized.  It should return a JSON encodable version of\nthe object or raise aTypeError.  If not specified,TypeErroris raised. Changed in version 3.6:All parameters are nowkeyword-only."
+    },
+    {
+      "type": "method_signature",
+      "text": "default(o)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Implement this method in a subclass such that it returns a serializable\nobject foro, or calls the base implementation (to raise aTypeError). For example, to support arbitrary iterators, you could implementdefault()like this: defdefault(self,o):try:iterable=iter(o)exceptTypeError:passelse:returnlist(iterable)# Let the base class default method raise the TypeErrorreturnsuper().default(o)"
+    },
+    {
+      "type": "method_signature",
+      "text": "encode(o)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a JSON string representation of a Python data structure,o.  For\nexample: >>>json.JSONEncoder().encode({\"foo\":[\"bar\",\"baz\"]})'{\"foo\": [\"bar\", \"baz\"]}'"
+    },
+    {
+      "type": "method_signature",
+      "text": "iterencode(o)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Encode the given object,o, and yield each string representation as\navailable.  For example: forchunkinjson.JSONEncoder().iterencode(bigobject):mysocket.write(chunk)"
+    }
+  ],
+  "timestamp": "2024-12-18T20:53:56.562550",
+  "url": "https://docs.python.org/3/library/json.html"
+}

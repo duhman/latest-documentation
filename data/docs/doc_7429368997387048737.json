@@ -1,0 +1,615 @@
+{
+  "title": "datetime â Basic date and time types — Python 3.13.1 documentation",
+  "content": [
+    {
+      "type": "class_signature",
+      "text": "classdatetime.date"
+    },
+    {
+      "type": "class_description",
+      "text": "An idealized naive date, assuming the current Gregorian calendar always was, and\nalways will be, in effect. Attributes:year,month, andday."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.time"
+    },
+    {
+      "type": "class_description",
+      "text": "An idealized time, independent of any particular day, assuming that every day\nhas exactly 24*60*60 seconds.  (There is no notion of âleap secondsâ here.)\nAttributes:hour,minute,second,microsecond,\nandtzinfo."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.datetime"
+    },
+    {
+      "type": "class_description",
+      "text": "A combination of a date and a time. Attributes:year,month,day,hour,minute,second,microsecond,\nandtzinfo."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.timedelta"
+    },
+    {
+      "type": "class_description",
+      "text": "A duration expressing the difference between twodatetimeordateinstances to microsecond resolution."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.tzinfo"
+    },
+    {
+      "type": "class_description",
+      "text": "An abstract base class for time zone information objects. These are used by thedatetimeandtimeclasses to provide a customizable notion of\ntime adjustment (for example, to account for time zone and/or daylight saving\ntime)."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.timezone"
+    },
+    {
+      "type": "class_description",
+      "text": "A class that implements thetzinfoabstract base class as a\nfixed offset from the UTC. Added in version 3.2."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.timedelta(days=0,seconds=0,microseconds=0,milliseconds=0,minutes=0,hours=0,weeks=0)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "All arguments are optional and default to 0. Arguments may be integers\nor floats, and may be positive or negative. Onlydays,secondsandmicrosecondsare stored internally.\nArguments are converted to those units: and days, seconds and microseconds are then normalized so that the\nrepresentation is unique, with The following example illustrates how any arguments besidesdays,secondsandmicrosecondsare âmergedâ and normalized into those\nthree resulting attributes: >>>fromdatetimeimporttimedelta>>>delta=timedelta(...days=50,...seconds=27,...microseconds=10,...milliseconds=29000,...minutes=5,...hours=8,...weeks=2...)>>># Only days, seconds, and microseconds remain>>>deltadatetime.timedelta(days=64, seconds=29156, microseconds=10) If any argument is a float and there are fractional microseconds,\nthe fractional microseconds left over from all arguments are\ncombined and their sum is rounded to the nearest microsecond using\nround-half-to-even tiebreaker. If no argument is a float, the\nconversion and normalization processes are exact (no information is\nlost). If the normalized value of days lies outside the indicated range,OverflowErroris raised. Note that normalization of negative values may be surprising at first. For\nexample: >>>fromdatetimeimporttimedelta>>>d=timedelta(microseconds=-1)>>>(d.days,d.seconds,d.microseconds)(-1, 86399, 999999)"
+    },
+    {
+      "type": "method_signature",
+      "text": "timedelta.total_seconds()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the total number of seconds contained in the duration. Equivalent totd/timedelta(seconds=1). For interval units other than seconds, use the\ndivision form directly (e.g.td/timedelta(microseconds=1)). Note that for very large time intervals (greater than 270 years on\nmost platforms) this method will lose microsecond accuracy. Added in version 3.2."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.date(year,month,day)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "All arguments are required. Arguments must be integers, in the following\nranges: If an argument outside those ranges is given,ValueErroris raised."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddate.today()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the current local date. This is equivalent todate.fromtimestamp(time.time())."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddate.fromtimestamp(timestamp)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the local date corresponding to the POSIX timestamp, such as is\nreturned bytime.time(). This may raiseOverflowError, if the timestamp is out\nof the range of values supported by the platform Clocaltime()function, andOSErroronlocaltime()failure.\nItâs common for this to be restricted to years from 1970 through 2038. Note\nthat on non-POSIX systems that include leap seconds in their notion of a\ntimestamp, leap seconds are ignored byfromtimestamp(). Changed in version 3.3:RaiseOverflowErrorinstead ofValueErrorif the timestamp\nis out of the range of values supported by the platform Clocaltime()function. RaiseOSErrorinstead ofValueErroronlocaltime()failure."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddate.fromordinal(ordinal)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the date corresponding to the proleptic Gregorian ordinal, where\nJanuary 1 of year 1 has ordinal 1. ValueErroris raised unless1<=ordinal<=date.max.toordinal(). For any dated,date.fromordinal(d.toordinal())==d."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddate.fromisoformat(date_string)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return adatecorresponding to adate_stringgiven in any valid\nISO 8601 format, with the following exceptions: Examples: >>>fromdatetimeimportdate>>>date.fromisoformat('2019-12-04')datetime.date(2019, 12, 4)>>>date.fromisoformat('20191204')datetime.date(2019, 12, 4)>>>date.fromisoformat('2021-W01-1')datetime.date(2021, 1, 4) Added in version 3.7. Changed in version 3.11:Previously, this method only supported the formatYYYY-MM-DD."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddate.fromisocalendar(year,week,day)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return adatecorresponding to the ISO calendar date specified by\nyear, week and day. This is the inverse of the functiondate.isocalendar(). Added in version 3.8."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.replace(year=self.year,month=self.month,day=self.day)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a date with the same value, except for those parameters given new\nvalues by whichever keyword arguments are specified. Example: >>>fromdatetimeimportdate>>>d=date(2002,12,31)>>>d.replace(day=26)datetime.date(2002, 12, 26) dateobjects are also supported by generic functioncopy.replace()."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.timetuple()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return atime.struct_timesuch as returned bytime.localtime(). The hours, minutes and seconds are 0, and the DST flag is -1. d.timetuple()is equivalent to: time.struct_time((d.year,d.month,d.day,0,0,0,d.weekday(),yday,-1)) whereyday=d.toordinal()-date(d.year,1,1).toordinal()+1is the day number within the current year starting with 1 for January 1st."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.toordinal()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the proleptic Gregorian ordinal of the date, where January 1 of year 1\nhas ordinal 1. For anydateobjectd,date.fromordinal(d.toordinal())==d."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.weekday()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the day of the week as an integer, where Monday is 0 and Sunday is 6.\nFor example,date(2002,12,4).weekday()==2, a Wednesday. See alsoisoweekday()."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.isoweekday()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the day of the week as an integer, where Monday is 1 and Sunday is 7.\nFor example,date(2002,12,4).isoweekday()==3, a Wednesday. See alsoweekday(),isocalendar()."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.isocalendar()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return anamed tupleobject with three components:year,weekandweekday. The ISO calendar is a widely used variant of the Gregorian calendar.[3] The ISO year consists of 52 or 53 full weeks, and where a week starts on a\nMonday and ends on a Sunday. The first week of an ISO year is the first\n(Gregorian) calendar week of a year containing a Thursday. This is called week\nnumber 1, and the ISO year of that Thursday is the same as its Gregorian year. For example, 2004 begins on a Thursday, so the first week of ISO year 2004\nbegins on Monday, 29 Dec 2003 and ends on Sunday, 4 Jan 2004: >>>fromdatetimeimportdate>>>date(2003,12,29).isocalendar()datetime.IsoCalendarDate(year=2004, week=1, weekday=1)>>>date(2004,1,4).isocalendar()datetime.IsoCalendarDate(year=2004, week=1, weekday=7) Changed in version 3.9:Result changed from a tuple to anamed tuple."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.isoformat()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the date in ISO 8601 format,YYYY-MM-DD: >>>fromdatetimeimportdate>>>date(2002,12,4).isoformat()'2002-12-04'"
+    },
+    {
+      "type": "method_signature",
+      "text": "date.__str__()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "For a dated,str(d)is equivalent tod.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.ctime()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the date: >>>fromdatetimeimportdate>>>date(2002,12,4).ctime()'Wed Dec  4 00:00:00 2002' d.ctime()is equivalent to: time.ctime(time.mktime(d.timetuple())) on platforms where the native Cctime()function (whichtime.ctime()invokes, but whichdate.ctime()does not invoke) conforms to the C standard."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.strftime(format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the date, controlled by an explicit format string.\nFormat codes referring to hours, minutes or seconds will see 0 values.\nSee alsostrftime() and strptime() Behavioranddate.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "date.__format__(format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Same asdate.strftime(). This makes it possible to specify a format\nstring for adateobject informatted string\nliteralsand when usingstr.format().\nSee alsostrftime() and strptime() Behavioranddate.isoformat()."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.datetime(year,month,day,hour=0,minute=0,second=0,microsecond=0,tzinfo=None,*,fold=0)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "Theyear,monthanddayarguments are required.tzinfomay beNone, or an\ninstance of atzinfosubclass. The remaining arguments must be integers\nin the following ranges: If an argument outside those ranges is given,ValueErroris raised. Changed in version 3.6:Added thefoldparameter."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.today()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the current local date and time, withtzinfoNone. Equivalent to: datetime.fromtimestamp(time.time()) See alsonow(),fromtimestamp(). This method is functionally equivalent tonow(), but without atzparameter."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.now(tz=None)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the current local date and time. If optional argumenttzisNoneor not specified, this is liketoday(), but, if possible, supplies more\nprecision than can be gotten from going through atime.time()timestamp\n(for example, this may be possible on platforms supplying the Cgettimeofday()function). Iftzis notNone, it must be an instance of atzinfosubclass,\nand the current date and time are converted totzâs time zone. This function is preferred overtoday()andutcnow(). NoteSubsequent calls todatetime.now()may return the same\ninstant depending on the precision of the underlying clock."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.utcnow()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the current UTC date and time, withtzinfoNone. This is likenow(), but returns the current UTC date and time, as a naivedatetimeobject. An aware current UTC datetime can be obtained by\ncallingdatetime.now(timezone.utc). See alsonow(). WarningBecause naivedatetimeobjects are treated by manydatetimemethods\nas local times, it is preferred to use aware datetimes to represent times\nin UTC. As such, the recommended way to create an object representing the\ncurrent time in UTC is by callingdatetime.now(timezone.utc). Deprecated since version 3.12:Usedatetime.now()withUTCinstead."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.fromtimestamp(timestamp,tz=None)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the local date and time corresponding to the POSIX timestamp, such as is\nreturned bytime.time(). If optional argumenttzisNoneor not\nspecified, the timestamp is converted to the platformâs local date and time, and\nthe returneddatetimeobject is naive. Iftzis notNone, it must be an instance of atzinfosubclass, and the\ntimestamp is converted totzâs time zone. fromtimestamp()may raiseOverflowError, if the timestamp is out of\nthe range of values supported by the platform Clocaltime()orgmtime()functions, andOSErroronlocaltime()orgmtime()failure.\nItâs common for this to be restricted to years in\n1970 through 2038. Note that on non-POSIX systems that include leap seconds in\ntheir notion of a timestamp, leap seconds are ignored byfromtimestamp(),\nand then itâs possible to have two timestamps differing by a second that yield\nidenticaldatetimeobjects. This method is preferred overutcfromtimestamp(). Changed in version 3.3:RaiseOverflowErrorinstead ofValueErrorif the timestamp\nis out of the range of values supported by the platform Clocaltime()orgmtime()functions. RaiseOSErrorinstead ofValueErroronlocaltime()orgmtime()failure. Changed in version 3.6:fromtimestamp()may return instances withfoldset to 1."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.utcfromtimestamp(timestamp)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the UTCdatetimecorresponding to the POSIX timestamp, withtzinfoNone.  (The resulting object is naive.) This may raiseOverflowError, if the timestamp is\nout of the range of values supported by the platform Cgmtime()function,\nandOSErrorongmtime()failure.\nItâs common for this to be restricted to years in 1970 through 2038. To get an awaredatetimeobject, callfromtimestamp(): datetime.fromtimestamp(timestamp,timezone.utc) On the POSIX compliant platforms, it is equivalent to the following\nexpression: datetime(1970,1,1,tzinfo=timezone.utc)+timedelta(seconds=timestamp) except the latter formula always supports the full years range: betweenMINYEARandMAXYEARinclusive. WarningBecause naivedatetimeobjects are treated by manydatetimemethods\nas local times, it is preferred to use aware datetimes to represent times\nin UTC. As such, the recommended way to create an object representing a\nspecific timestamp in UTC is by callingdatetime.fromtimestamp(timestamp,tz=timezone.utc). Changed in version 3.3:RaiseOverflowErrorinstead ofValueErrorif the timestamp\nis out of the range of values supported by the platform Cgmtime()function. RaiseOSErrorinstead ofValueErrorongmtime()failure. Deprecated since version 3.12:Usedatetime.fromtimestamp()withUTCinstead."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.fromordinal(ordinal)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return thedatetimecorresponding to the proleptic Gregorian ordinal,\nwhere January 1 of year 1 has ordinal 1.ValueErroris raised unless1<=ordinal<=datetime.max.toordinal(). The hour, minute, second and\nmicrosecond of the result are all 0, andtzinfoisNone."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.combine(date,time,tzinfo=time.tzinfo)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a newdatetimeobject whose date components are equal to the\ngivendateobjectâs, and whose time components\nare equal to the giventimeobjectâs. If thetzinfoargument is provided, its value is used to set thetzinfoattribute\nof the result, otherwise thetzinfoattribute of thetimeargument\nis used.  If thedateargument is adatetimeobject, its time components\nandtzinfoattributes are ignored. For anydatetimeobjectd,d==datetime.combine(d.date(),d.time(),d.tzinfo). Changed in version 3.6:Added thetzinfoargument."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.fromisoformat(date_string)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return adatetimecorresponding to adate_stringin any valid\nISO 8601 format, with the following exceptions: Examples: >>>fromdatetimeimportdatetime>>>datetime.fromisoformat('2011-11-04')datetime.datetime(2011, 11, 4, 0, 0)>>>datetime.fromisoformat('20111104')datetime.datetime(2011, 11, 4, 0, 0)>>>datetime.fromisoformat('2011-11-04T00:05:23')datetime.datetime(2011, 11, 4, 0, 5, 23)>>>datetime.fromisoformat('2011-11-04T00:05:23Z')datetime.datetime(2011, 11, 4, 0, 5, 23, tzinfo=datetime.timezone.utc)>>>datetime.fromisoformat('20111104T000523')datetime.datetime(2011, 11, 4, 0, 5, 23)>>>datetime.fromisoformat('2011-W01-2T00:05:23.283')datetime.datetime(2011, 1, 4, 0, 5, 23, 283000)>>>datetime.fromisoformat('2011-11-04 00:05:23.283')datetime.datetime(2011, 11, 4, 0, 5, 23, 283000)>>>datetime.fromisoformat('2011-11-04 00:05:23.283+00:00')datetime.datetime(2011, 11, 4, 0, 5, 23, 283000, tzinfo=datetime.timezone.utc)>>>datetime.fromisoformat('2011-11-04T00:05:23+04:00')datetime.datetime(2011, 11, 4, 0, 5, 23,tzinfo=datetime.timezone(datetime.timedelta(seconds=14400))) Added in version 3.7. Changed in version 3.11:Previously, this method only supported formats that could be emitted bydate.isoformat()ordatetime.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.fromisocalendar(year,week,day)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return adatetimecorresponding to the ISO calendar date specified\nby year, week and day. The non-date components of the datetime are populated\nwith their normal default values. This is the inverse of the functiondatetime.isocalendar(). Added in version 3.8."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethoddatetime.strptime(date_string,format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return adatetimecorresponding todate_string, parsed according toformat. Ifformatdoes not contain microseconds or time zone information, this is equivalent to: datetime(*(time.strptime(date_string,format)[0:6])) ValueErroris raised if the date_string and format\ncanât be parsed bytime.strptime()or if it returns a value which isnât a\ntime tuple.  See alsostrftime() and strptime() Behavioranddatetime.fromisoformat(). Changed in version 3.13:Ifformatspecifies a day of month without a year aDeprecationWarningis now emitted.  This is to avoid a quadrennial\nleap year bug in code seeking to parse only a month and day as the\ndefault year used in absence of one in the format is not a leap year.\nSuchformatvalues may raise an error as of Python 3.15.  The\nworkaround is to always include a year in yourformat.  If parsingdate_stringvalues that do not have a year, explicitly add a year that\nis a leap year before parsing:>>>fromdatetimeimportdatetime>>>date_string=\"02/29\">>>when=datetime.strptime(f\"{date_string};1984\",\"%m/%d;%Y\")# Avoids leap year bug.>>>when.strftime(\"%B%d\")'February 29'"
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.date()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Returndateobject with same year, month and day."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.time()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Returntimeobject with same hour, minute, second, microsecond and fold.tzinfoisNone. See also methodtimetz(). Changed in version 3.6:The fold value is copied to the returnedtimeobject."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.timetz()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Returntimeobject with same hour, minute, second, microsecond, fold, and\ntzinfo attributes. See also methodtime(). Changed in version 3.6:The fold value is copied to the returnedtimeobject."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.replace(year=self.year,month=self.month,day=self.day,hour=self.hour,minute=self.minute,second=self.second,microsecond=self.microsecond,tzinfo=self.tzinfo,*,fold=0)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a datetime with the same attributes, except for those attributes given\nnew values by whichever keyword arguments are specified. Note thattzinfo=Nonecan be specified to create a naive datetime from an aware\ndatetime with no conversion of date and time data. datetimeobjects are also supported by generic functioncopy.replace(). Changed in version 3.6:Added thefoldparameter."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.astimezone(tz=None)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return adatetimeobject with newtzinfoattributetz,\nadjusting the date and time data so the result is the same UTC time asself, but intzâs local time. If provided,tzmust be an instance of atzinfosubclass, and itsutcoffset()anddst()methods must not returnNone. Ifselfis naive, it is presumed to represent time in the system time zone. If called without arguments (or withtz=None) the system local\ntime zone is assumed for the target time zone. The.tzinfoattribute of the converted\ndatetime instance will be set to an instance oftimezonewith the zone name and offset obtained from the OS. Ifself.tzinfoistz,self.astimezone(tz)is equal toself:  no\nadjustment of date or time data is performed. Else the result is local\ntime in the time zonetz, representing the same UTC time asself:  afterastz=dt.astimezone(tz),astz-astz.utcoffset()will have\nthe same date and time data asdt-dt.utcoffset(). If you merely want to attach atimezoneobjecttzto a datetimedtwithout\nadjustment of date and time data, usedt.replace(tzinfo=tz). If you\nmerely want to remove thetimezoneobject from an aware datetimedtwithout\nconversion of date and time data, usedt.replace(tzinfo=None). Note that the defaulttzinfo.fromutc()method can be overridden in atzinfosubclass to affect the result returned byastimezone().\nIgnoring error cases,astimezone()acts like: defastimezone(self,tz):ifself.tzinfoistz:returnself# Convert self to UTC, and attach the new timezone object.utc=(self-self.utcoffset()).replace(tzinfo=tz)# Convert from UTC to tz's local time.returntz.fromutc(utc) Changed in version 3.3:tznow can be omitted. Changed in version 3.6:Theastimezone()method can now be called on naive instances that\nare presumed to represent system local time."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.utcoffset()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "IftzinfoisNone, returnsNone, else returnsself.tzinfo.utcoffset(self), and raises an exception if the latter doesnât\nreturnNoneor atimedeltaobject with magnitude less than one day. Changed in version 3.7:The UTC offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.dst()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "IftzinfoisNone, returnsNone, else returnsself.tzinfo.dst(self), and raises an exception if the latter doesnât returnNoneor atimedeltaobject with magnitude less than one day. Changed in version 3.7:The DST offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.tzname()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "IftzinfoisNone, returnsNone, else returnsself.tzinfo.tzname(self), raises an exception if the latter doesnât returnNoneor a string object,"
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.timetuple()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return atime.struct_timesuch as returned bytime.localtime(). d.timetuple()is equivalent to: time.struct_time((d.year,d.month,d.day,d.hour,d.minute,d.second,d.weekday(),yday,dst)) whereyday=d.toordinal()-date(d.year,1,1).toordinal()+1is the day number within the current year starting with 1 for January\n1st. Thetm_isdstflag of the result is set according to thedst()method:tzinfoisNoneordst()returnsNone,tm_isdstis set to-1; else ifdst()returns a\nnon-zero value,tm_isdstis set to 1; elsetm_isdstis\nset to 0."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.utctimetuple()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Ifdatetimeinstancedis naive, this is the same asd.timetuple()except thattm_isdstis forced to 0 regardless of whatd.dst()returns. DST is never in effect for a UTC time. Ifdis aware,dis normalized to UTC time, by subtractingd.utcoffset(), and atime.struct_timefor the\nnormalized time is returned.tm_isdstis forced to 0. Note\nthat anOverflowErrormay be raised ifd.yearwasMINYEARorMAXYEARand UTC adjustment spills over a year\nboundary. WarningBecause naivedatetimeobjects are treated by manydatetimemethods\nas local times, it is preferred to use aware datetimes to represent times\nin UTC; as a result, usingdatetime.utctimetuple()may give misleading\nresults. If you have a naivedatetimerepresenting UTC, usedatetime.replace(tzinfo=timezone.utc)to make it aware, at which point\nyou can usedatetime.timetuple()."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.toordinal()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the proleptic Gregorian ordinal of the date. The same asself.date().toordinal()."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.timestamp()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return POSIX timestamp corresponding to thedatetimeinstance. The return value is afloatsimilar to that\nreturned bytime.time(). Naivedatetimeinstances are assumed to represent local\ntime and this method relies on the platform Cmktime()function to perform the conversion. Sincedatetimesupports wider range of values thanmktime()on many\nplatforms, this method may raiseOverflowErrororOSErrorfor times far in the past or far in the future. For awaredatetimeinstances, the return value is computed\nas: (dt-datetime(1970,1,1,tzinfo=timezone.utc)).total_seconds() Added in version 3.3. Changed in version 3.6:Thetimestamp()method uses thefoldattribute to\ndisambiguate the times during a repeated interval. NoteThere is no method to obtain the POSIX timestamp directly from a\nnaivedatetimeinstance representing UTC time. If your\napplication uses this convention and your system time zone is not\nset to UTC, you can obtain the POSIX timestamp by supplyingtzinfo=timezone.utc:timestamp=dt.replace(tzinfo=timezone.utc).timestamp()or by calculating the timestamp directly:timestamp=(dt-datetime(1970,1,1))/timedelta(seconds=1)"
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.weekday()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the day of the week as an integer, where Monday is 0 and Sunday is 6.\nThe same asself.date().weekday(). See alsoisoweekday()."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.isoweekday()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the day of the week as an integer, where Monday is 1 and Sunday is 7.\nThe same asself.date().isoweekday(). See alsoweekday(),isocalendar()."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.isocalendar()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return anamed tuplewith three components:year,weekandweekday. The same asself.date().isocalendar()."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.isoformat(sep='T',timespec='auto')Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the date and time in ISO 8601 format: Ifutcoffset()does not returnNone, a string is\nappended, giving the UTC offset: Examples: >>>fromdatetimeimportdatetime,timezone>>>datetime(2019,5,18,15,17,8,132263).isoformat()'2019-05-18T15:17:08.132263'>>>datetime(2019,5,18,15,17,tzinfo=timezone.utc).isoformat()'2019-05-18T15:17:00+00:00' The optional argumentsep(default'T') is a one-character separator,\nplaced between the date and time portions of the result. For example: >>>fromdatetimeimporttzinfo,timedelta,datetime>>>classTZ(tzinfo):...\"\"\"A time zone with an arbitrary, constant -06:39 offset.\"\"\"...defutcoffset(self,dt):...returntimedelta(hours=-6,minutes=-39)...>>>datetime(2002,12,25,tzinfo=TZ()).isoformat(' ')'2002-12-25 00:00:00-06:39'>>>datetime(2009,11,27,microsecond=100,tzinfo=TZ()).isoformat()'2009-11-27T00:00:00.000100-06:39' The optional argumenttimespecspecifies the number of additional\ncomponents of the time to include (the default is'auto').\nIt can be one of the following: NoteExcluded time components are truncated, not rounded. ValueErrorwill be raised on an invalidtimespecargument: >>>fromdatetimeimportdatetime>>>datetime.now().isoformat(timespec='minutes')'2002-12-25T00:00'>>>dt=datetime(2015,1,1,12,30,59,0)>>>dt.isoformat(timespec='microseconds')'2015-01-01T12:30:59.000000' Changed in version 3.6:Added thetimespecparameter."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.__str__()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "For adatetimeinstanced,str(d)is equivalent tod.isoformat('')."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.ctime()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the date and time: >>>fromdatetimeimportdatetime>>>datetime(2002,12,4,20,30,40).ctime()'Wed Dec  4 20:30:40 2002' The output string willnotinclude time zone information, regardless\nof whether the input is aware or naive. d.ctime()is equivalent to: time.ctime(time.mktime(d.timetuple())) on platforms where the native Cctime()function\n(whichtime.ctime()invokes, but whichdatetime.ctime()does not invoke) conforms to the C standard."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.strftime(format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the date and time,\ncontrolled by an explicit format string.\nSee alsostrftime() and strptime() Behavioranddatetime.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "datetime.__format__(format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Same asdatetime.strftime(). This makes it possible to specify a format\nstring for adatetimeobject informatted string\nliteralsand when usingstr.format().\nSee alsostrftime() and strptime() Behavioranddatetime.isoformat()."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.time(hour=0,minute=0,second=0,microsecond=0,tzinfo=None,*,fold=0)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "All arguments are optional.tzinfomay beNone, or an instance of atzinfosubclass. The remaining arguments must be integers in the\nfollowing ranges: If an argument outside those ranges is given,ValueErroris raised. All\ndefault to 0 excepttzinfo, which defaults toNone."
+    },
+    {
+      "type": "method_signature",
+      "text": "classmethodtime.fromisoformat(time_string)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return atimecorresponding to atime_stringin any valid\nISO 8601 format, with the following exceptions: Examples: >>>fromdatetimeimporttime>>>time.fromisoformat('04:23:01')datetime.time(4, 23, 1)>>>time.fromisoformat('T04:23:01')datetime.time(4, 23, 1)>>>time.fromisoformat('T042301')datetime.time(4, 23, 1)>>>time.fromisoformat('04:23:01.000384')datetime.time(4, 23, 1, 384)>>>time.fromisoformat('04:23:01,000384')datetime.time(4, 23, 1, 384)>>>time.fromisoformat('04:23:01+04:00')datetime.time(4, 23, 1, tzinfo=datetime.timezone(datetime.timedelta(seconds=14400)))>>>time.fromisoformat('04:23:01Z')datetime.time(4, 23, 1, tzinfo=datetime.timezone.utc)>>>time.fromisoformat('04:23:01+00:00')datetime.time(4, 23, 1, tzinfo=datetime.timezone.utc) Added in version 3.7. Changed in version 3.11:Previously, this method only supported formats that could be emitted bytime.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.replace(hour=self.hour,minute=self.minute,second=self.second,microsecond=self.microsecond,tzinfo=self.tzinfo,*,fold=0)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return atimewith the same value, except for those attributes given\nnew values by whichever keyword arguments are specified. Note thattzinfo=Nonecan be specified to create a naivetimefrom an\nawaretime, without conversion of the time data. timeobjects are also supported by generic functioncopy.replace(). Changed in version 3.6:Added thefoldparameter."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.isoformat(timespec='auto')Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the time in ISO 8601 format, one of: The optional argumenttimespecspecifies the number of additional\ncomponents of the time to include (the default is'auto').\nIt can be one of the following: NoteExcluded time components are truncated, not rounded. ValueErrorwill be raised on an invalidtimespecargument. Example: >>>fromdatetimeimporttime>>>time(hour=12,minute=34,second=56,microsecond=123456).isoformat(timespec='minutes')'12:34'>>>dt=time(hour=12,minute=34,second=56,microsecond=0)>>>dt.isoformat(timespec='microseconds')'12:34:56.000000'>>>dt.isoformat(timespec='auto')'12:34:56' Changed in version 3.6:Added thetimespecparameter."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.__str__()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "For a timet,str(t)is equivalent tot.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.strftime(format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return a string representing the time, controlled by an explicit format\nstring.  See alsostrftime() and strptime() Behaviorandtime.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.__format__(format)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Same astime.strftime(). This makes it possible to specify\na format string for atimeobject informatted string\nliteralsand when usingstr.format().\nSee alsostrftime() and strptime() Behaviorandtime.isoformat()."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.utcoffset()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "IftzinfoisNone, returnsNone, else returnsself.tzinfo.utcoffset(None), and raises an exception if the latter doesnât\nreturnNoneor atimedeltaobject with magnitude less than one day. Changed in version 3.7:The UTC offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.dst()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "IftzinfoisNone, returnsNone, else returnsself.tzinfo.dst(None), and raises an exception if the latter doesnât returnNone, or atimedeltaobject with magnitude less than one day. Changed in version 3.7:The DST offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "time.tzname()Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "IftzinfoisNone, returnsNone, else returnsself.tzinfo.tzname(None), or raises an exception if the latter doesnât\nreturnNoneor a string object."
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.tzinfoÂ¶"
+    },
+    {
+      "type": "class_description",
+      "text": "This is an abstract base class, meaning that this class should not be\ninstantiated directly.  Define a subclass oftzinfoto capture\ninformation about a particular time zone. An instance of (a concrete subclass of)tzinfocan be passed to the\nconstructors fordatetimeandtimeobjects. The latter objects\nview their attributes as being in local time, and thetzinfoobject\nsupports methods revealing offset of local time from UTC, the name of the time\nzone, and DST offset, all relative to a date or time object passed to them. You need to derive a concrete subclass, and (at least)\nsupply implementations of the standardtzinfomethods needed by thedatetimemethods you use. Thedatetimemodule providestimezone, a simple concrete subclass oftzinfowhich can\nrepresent time zones with fixed offset from UTC such as UTC itself or North\nAmerican EST and EDT. Special requirement for pickling:  Atzinfosubclass must have an__init__()method that can be called with no arguments,\notherwise it can be\npickled but possibly not unpickled again. This is a technical requirement that\nmay be relaxed in the future. A concrete subclass oftzinfomay need to implement the following\nmethods. Exactly which methods are needed depends on the uses made of awaredatetimeobjects. If in doubt, simply implement all of them."
+    },
+    {
+      "type": "method_signature",
+      "text": "tzinfo.utcoffset(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return offset of local time from UTC, as atimedeltaobject that is\npositive east of UTC. If local time is west of UTC, this should be negative. This represents thetotaloffset from UTC; for example, if atzinfoobject represents both time zone and DST adjustments,utcoffset()should return their sum. If the UTC offset isnât known,\nreturnNone. Else the value returned must be atimedeltaobject\nstrictly between-timedelta(hours=24)andtimedelta(hours=24)(the magnitude of the offset must be less than one day). Most implementations\nofutcoffset()will probably look like one of these two: returnCONSTANT# fixed-offset classreturnCONSTANT+self.dst(dt)# daylight-aware class Ifutcoffset()does not returnNone,dst()should not returnNoneeither. The default implementation ofutcoffset()raisesNotImplementedError. Changed in version 3.7:The UTC offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "tzinfo.dst(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the daylight saving time (DST) adjustment, as atimedeltaobject orNoneif DST information isnât known. Returntimedelta(0)if DST is not in effect.\nIf DST is in effect, return the offset as atimedeltaobject\n(seeutcoffset()for details). Note that DST offset, if applicable, has\nalready been added to the UTC offset returned byutcoffset(), so thereâs\nno need to consultdst()unless youâre interested in obtaining DST info\nseparately. For example,datetime.timetuple()calls itstzinfoattributeâsdst()method to determine how thetm_isdstflag\nshould be set, andtzinfo.fromutc()callsdst()to account for\nDST changes when crossing time zones. An instancetzof atzinfosubclass that models both standard and\ndaylight times must be consistent in this sense: tz.utcoffset(dt)-tz.dst(dt) must return the same result for everydatetimedtwithdt.tzinfo==tz. For sanetzinfosubclasses, this expression yields the time\nzoneâs âstandard offsetâ, which should not depend on the date or the time, but\nonly on geographic location. The implementation ofdatetime.astimezone()relies on this, but cannot detect violations; itâs the programmerâs\nresponsibility to ensure it. If atzinfosubclass cannot guarantee\nthis, it may be able to override the default implementation oftzinfo.fromutc()to work correctly withastimezone()regardless. Most implementations ofdst()will probably look like one of these two: defdst(self,dt):# a fixed-offset class:  doesn't account for DSTreturntimedelta(0) or: defdst(self,dt):# Code to set dston and dstoff to the time zone's DST# transition times based on the input dt.year, and expressed# in standard local time.ifdston<=dt.replace(tzinfo=None)<dstoff:returntimedelta(hours=1)else:returntimedelta(0) The default implementation ofdst()raisesNotImplementedError. Changed in version 3.7:The DST offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "tzinfo.tzname(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the time zone name corresponding to thedatetimeobjectdt, as\na string. Nothing about string names is defined by thedatetimemodule,\nand thereâs no requirement that it mean anything in particular. For example,\"GMT\",\"UTC\",\"-500\",\"-5:00\",\"EDT\",\"US/Eastern\",\"America/NewYork\"are all\nvalid replies. ReturnNoneif a string name isnât known. Note that this is\na method rather than a fixed string primarily because sometzinfosubclasses will wish to return different names depending on the specific value\nofdtpassed, especially if thetzinfoclass is accounting for\ndaylight time. The default implementation oftzname()raisesNotImplementedError."
+    },
+    {
+      "type": "method_signature",
+      "text": "tzinfo.fromutc(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "This is called from the defaultdatetime.astimezone()implementation. When called from that,dt.tzinfoisself, anddtâs\ndate and time data are to be viewed as expressing a UTC time. The purpose\noffromutc()is to adjust the date and time data, returning an\nequivalent datetime inselfâs local time. Mosttzinfosubclasses should be able to inherit the defaultfromutc()implementation without problems. Itâs strong enough to handle\nfixed-offset time zones, and time zones accounting for both standard and\ndaylight time, and the latter even if the DST transition times differ in\ndifferent years. An example of a time zone the defaultfromutc()implementation may not handle correctly in all cases is one where the standard\noffset (from UTC) depends on the specific date and time passed, which can happen\nfor political reasons. The default implementations ofastimezone()andfromutc()may not produce the result you want if the result is one of the\nhours straddling the moment the standard offset changes. Skipping code for error cases, the defaultfromutc()implementation acts\nlike: deffromutc(self,dt):# raise ValueError error if dt.tzinfo is not selfdtoff=dt.utcoffset()dtdst=dt.dst()# raise ValueError if dtoff is None or dtdst is Nonedelta=dtoff-dtdst# this is self's standard offsetifdelta:dt+=delta# convert to standard local timedtdst=dt.dst()# raise ValueError if dtdst is Noneifdtdst:returndt+dtdstelse:returndt"
+    },
+    {
+      "type": "class_signature",
+      "text": "classdatetime.timezone(offset,name=None)Â¶"
+    },
+    {
+      "type": "class_description",
+      "text": "Theoffsetargument must be specified as atimedeltaobject representing the difference between the local time and UTC. It must\nbe strictly between-timedelta(hours=24)andtimedelta(hours=24), otherwiseValueErroris raised. Thenameargument is optional. If specified it must be a string that\nwill be used as the value returned by thedatetime.tzname()method. Added in version 3.2. Changed in version 3.7:The UTC offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "timezone.utcoffset(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the fixed value specified when thetimezoneinstance is\nconstructed. Thedtargument is ignored. The return value is atimedeltainstance equal to the difference between the local time and UTC. Changed in version 3.7:The UTC offset is not restricted to a whole number of minutes."
+    },
+    {
+      "type": "method_signature",
+      "text": "timezone.tzname(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Return the fixed value specified when thetimezoneinstance\nis constructed. Ifnameis not provided in the constructor, the name returned bytzname(dt)is generated from the value of theoffsetas follows. Ifoffsetistimedelta(0), the name is âUTCâ, otherwise it is a string in\nthe formatUTCÂ±HH:MM, where Â± is the sign ofoffset, HH and MM are\ntwo digits ofoffset.hoursandoffset.minutesrespectively. Changed in version 3.6:Name generated fromoffset=timedelta(0)is now plain'UTC', not'UTC+00:00'."
+    },
+    {
+      "type": "method_signature",
+      "text": "timezone.dst(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Always returnsNone."
+    },
+    {
+      "type": "method_signature",
+      "text": "timezone.fromutc(dt)Â¶"
+    },
+    {
+      "type": "method_description",
+      "text": "Returndt+offset. Thedtargument must be an awaredatetimeinstance, withtzinfoset toself."
+    }
+  ],
+  "timestamp": "2024-12-18T20:52:19.251468",
+  "url": "https://docs.python.org/3/library/datetime.html"
+}

@@ -1,0 +1,4 @@
+firecrawl==1.6.4
+beautifulsoup4==4.12.2
+python-dotenv==1.0.0
+pydantic==2.5.3

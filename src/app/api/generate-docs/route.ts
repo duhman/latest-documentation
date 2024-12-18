@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { mkdir, writeFile } from 'fs/promises'
+import { readFileSync } from 'fs'
 import path from 'path'
 import { DocumentationProcessor, DocumentationError } from '@/utils/documentationProcessor'
 
-export interface GenerateDocsResponse {
+interface GenerateDocsResponse {
   success: boolean
   message: string
-  filePath?: string
+  documentation?: string
   error?: {
     code: string
     message: string
@@ -14,12 +15,11 @@ export interface GenerateDocsResponse {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { product, requirements } = await req.json()
+    const { productName, requirements } = await request.json()
 
-    // Input validation
-    if (!product?.trim()) {
+    if (!productName?.trim()) {
       return NextResponse.json<GenerateDocsResponse>(
         {
           success: false,
@@ -47,30 +47,29 @@ export async function POST(req: Request) {
       )
     }
 
+    const processor = new DocumentationProcessor()
+    
     // Create docs directory if it doesn't exist
     const docsDir = path.join(process.cwd(), 'public', 'docs')
     await mkdir(docsDir, { recursive: true })
 
-    // Initialize the documentation processor
-    const processor = new DocumentationProcessor(product, requirements)
+    // Generate unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const fileName = `${productName.toLowerCase()}-docs-${timestamp}.md`
+    const filePath = path.join(docsDir, fileName)
 
     // Generate documentation
-    const markdown = await processor.generateDocumentation()
-
-    // Save to file
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-    const fileName = `${product.toLowerCase()}-docs-${timestamp}.md`
-    const filePath = path.join(docsDir, fileName)
+    const markdown = await processor.generateDocumentation(productName, requirements)
     
     await writeFile(filePath, markdown, 'utf-8')
 
-    // Convert absolute path to relative URL path
-    const urlPath = `/docs/${fileName}`
+    // Read the generated markdown file
+    const documentation = readFileSync(filePath, 'utf-8')
 
     return NextResponse.json<GenerateDocsResponse>({
       success: true,
       message: 'Documentation generated successfully',
-      filePath: urlPath,
+      documentation,
     })
   } catch (error) {
     console.error('Error generating documentation:', error)
@@ -97,14 +96,13 @@ export async function POST(req: Request) {
       )
     }
 
-    // Generic error response
     return NextResponse.json<GenerateDocsResponse>(
       {
         success: false,
-        message: 'An unexpected error occurred',
+        message: 'Failed to generate documentation',
         error: {
-          code: 'INTERNAL_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error'
+          code: 'UNKNOWN_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error occurred'
         }
       },
       { status: 500 }
